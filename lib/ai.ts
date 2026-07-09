@@ -3,7 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import type { LanguageModel } from "ai";
-import { readSecrets, Secrets } from "./store";
+import { Secrets } from "./store";
 
 /**
  * Provider-agnostic model factory. Maps the chosen provider + model + key to a
@@ -13,9 +13,9 @@ import { readSecrets, Secrets } from "./store";
 
 export class MissingKeyError extends Error {}
 
-export async function getModel(opts?: { cheap?: boolean; secrets?: Secrets }): Promise<LanguageModel> {
-  const s = opts?.secrets ?? (await readSecrets());
-  const modelId = opts?.cheap ? s.cheapModel || s.model : s.model;
+export async function getModel(opts: { cheap?: boolean; secrets: Secrets }): Promise<LanguageModel> {
+  const s = opts.secrets;
+  const modelId = opts.cheap ? s.cheapModel || s.model : s.model;
 
   switch (s.provider) {
     case "anthropic": {

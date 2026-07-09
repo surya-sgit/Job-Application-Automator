@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
+import AuthStatus from "@/components/AuthStatus";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/settings" className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
                   Settings
                 </Link>
-                <LogoutButton />
+                <AuthStatus />
               </nav>
             </div>
           </header>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
 import { readSecrets } from "@/lib/store";
+import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { JdAnalysisSchema } from "@/lib/resumeSchema";
 import { ANALYZE_SYSTEM, analyzeUser } from "@/lib/prompts";
 
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const secrets = await readSecrets();
+    const userId = await requireUserId();
+    const secrets = await readSecrets(userId);
     const { object, usage } = await generateObject({
       model: await getModel({ cheap: true, secrets }),
       schema: JdAnalysisSchema,
@@ -25,6 +27,9 @@ export async function POST(req: NextRequest) {
     console.log(`[analyze] ${describeConfig(secrets)} tokens=`, usage);
     return NextResponse.json({ analysis: object, usage });
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
     if (err instanceof MissingKeyError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }

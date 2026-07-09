@@ -14,6 +14,19 @@ export function analyzeUser(jd: string): string {
   return `Job description:\n"""\n${jd.slice(0, 6000)}\n"""\n\nExtract the job title, seniority, hard skills, soft skills, ATS keywords, and key responsibilities.`;
 }
 
+export const RESUME_PARSE_SYSTEM =
+  "You extract structured profile data from a raw resume/CV text dump. Extract " +
+  "the person's name, headline/title, contact info (email, phone, location), " +
+  "links (portfolio, GitHub, LinkedIn, etc.), a professional summary (write a " +
+  "short one from the content if none is present), skills, distinct projects, " +
+  "work experience entries, and education entries. Preserve the resume's own " +
+  "wording for bullets where reasonable. Do NOT invent employers, dates, degrees, " +
+  "or accomplishments that aren't in the text. Leave a field empty if it isn't present.";
+
+export function resumeParseUser(text: string): string {
+  return `Resume text:\n"""\n${text.slice(0, 12000)}\n"""\n\nExtract the structured profile now.`;
+}
+
 export const QUESTIONS_SYSTEM =
   "You are a resume-tailoring assistant. Given a JD analysis and the candidate's " +
   "relevant material, ask 3-6 short, specific clarifying questions whose answers " +

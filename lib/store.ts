@@ -1,13 +1,16 @@
 import fs from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import { encrypt, decrypt } from "./crypto";
 import { Profile, ProfileSchema } from "./resumeSchema";
 
 /**
  * Storage layer with two backends:
- *   - Postgres (Neon), a single key/value table, when DATABASE_URL is set —
- *     this is what makes profile/secrets persist on a serverless host.
- *   - Local JSON files under /data (gitignored) otherwise, for local dev.
+ *   - Postgres (Neon), when DATABASE_URL is set — real user accounts
+ *     (`users`) plus per-user profile/secrets (`user_data`). This is what
+ *     makes accounts and data persist on a serverless host.
+ *   - Local JSON files under /data (gitignored) otherwise, for local dev
+ *     with zero setup — single-user, no accounts (matches pre-auth behavior).
  *
  * profile.json is plaintext (it's yours); secrets are always AES-encrypted
  * before being written to either backend.
@@ -17,7 +20,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const PROFILE_FILE = path.join(DATA_DIR, "profile.json");
 const SECRETS_FILE = path.join(DATA_DIR, "secrets.json");
 
-const USE_DB = !!process.env.DATABASE_URL;
+export const USE_DB = !!process.env.DATABASE_URL;
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -33,38 +36,79 @@ async function db(): Promise<Sql> {
     sqlSingleton = neon(process.env.DATABASE_URL!);
   }
   if (!schemaReady) {
-    schemaReady = sqlSingleton`
-      CREATE TABLE IF NOT EXISTS app_kv (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `.then(() => undefined);
+    schemaReady = (async () => {
+      await sqlSingleton!`
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `;
+      await sqlSingleton!`
+        CREATE TABLE IF NOT EXISTS user_data (
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          key TEXT NOT NULL,
+          value TEXT NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (user_id, key)
+        )
+      `;
+    })();
   }
   await schemaReady;
   return sqlSingleton;
 }
 
-async function kvGet(key: string): Promise<string | null> {
+async function kvGet(userId: string, key: string): Promise<string | null> {
   const sql = await db();
-  const rows = (await sql`SELECT value FROM app_kv WHERE key = ${key}`) as Array<{ value: string }>;
+  const rows = (await sql`
+    SELECT value FROM user_data WHERE user_id = ${userId} AND key = ${key}
+  `) as Array<{ value: string }>;
   return rows[0]?.value ?? null;
 }
 
-async function kvSet(key: string, value: string): Promise<void> {
+async function kvSet(userId: string, key: string, value: string): Promise<void> {
   const sql = await db();
   await sql`
-    INSERT INTO app_kv (key, value, updated_at) VALUES (${key}, ${value}, now())
-    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+    INSERT INTO user_data (user_id, key, value, updated_at) VALUES (${userId}, ${key}, ${value}, now())
+    ON CONFLICT (user_id, key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
   `;
 }
 
-// ---------- Profile ----------
+// ---------- Users ----------
 
-export async function readProfile(): Promise<Profile> {
+export interface StoredUser {
+  id: string;
+  email: string;
+  passwordHash: string;
+}
+
+export async function createUser(email: string, passwordHash: string): Promise<StoredUser> {
+  const sql = await db();
+  const id = randomUUID();
+  const normalizedEmail = email.trim().toLowerCase();
+  await sql`INSERT INTO users (id, email, password_hash) VALUES (${id}, ${normalizedEmail}, ${passwordHash})`;
+  return { id, email: normalizedEmail, passwordHash };
+}
+
+export async function findUserByEmail(email: string): Promise<StoredUser | null> {
+  const sql = await db();
+  const rows = (await sql`
+    SELECT id, email, password_hash FROM users WHERE email = ${email.trim().toLowerCase()}
+  `) as Array<{ id: string; email: string; password_hash: string }>;
+  const row = rows[0];
+  if (!row) return null;
+  return { id: row.id, email: row.email, passwordHash: row.password_hash };
+}
+
+// ---------- Profile ----------
+// `userId` is ignored in file-fallback (single-user, no-DB) mode.
+
+export async function readProfile(userId: string): Promise<Profile> {
   try {
     if (USE_DB) {
-      const raw = await kvGet("profile");
+      const raw = await kvGet(userId, "profile");
       if (!raw) return ProfileSchema.parse({});
       return ProfileSchema.parse(JSON.parse(raw));
     }
@@ -76,10 +120,10 @@ export async function readProfile(): Promise<Profile> {
   }
 }
 
-export async function writeProfile(profile: Profile): Promise<Profile> {
+export async function writeProfile(userId: string, profile: Profile): Promise<Profile> {
   const parsed = ProfileSchema.parse(profile);
   if (USE_DB) {
-    await kvSet("profile", JSON.stringify(parsed));
+    await kvSet(userId, "profile", JSON.stringify(parsed));
     return parsed;
   }
   ensureDir();
@@ -114,15 +158,15 @@ const DEFAULT_SECRETS: Secrets = {
   ollamaBaseUrl: "http://localhost:11434",
 };
 
-async function readEncryptedSecrets(): Promise<string | null> {
-  if (USE_DB) return kvGet("secrets");
+async function readEncryptedSecrets(userId: string): Promise<string | null> {
+  if (USE_DB) return kvGet(userId, "secrets");
   if (!fs.existsSync(SECRETS_FILE)) return null;
   return fs.readFileSync(SECRETS_FILE, "utf8");
 }
 
-async function writeEncryptedSecrets(payload: string): Promise<void> {
+async function writeEncryptedSecrets(userId: string, payload: string): Promise<void> {
   if (USE_DB) {
-    await kvSet("secrets", payload);
+    await kvSet(userId, "secrets", payload);
     return;
   }
   ensureDir();
@@ -130,10 +174,10 @@ async function writeEncryptedSecrets(payload: string): Promise<void> {
 }
 
 /** Read secrets, layering env-var fallbacks under anything saved in the UI. */
-export async function readSecrets(): Promise<Secrets> {
+export async function readSecrets(userId: string): Promise<Secrets> {
   let saved: Partial<Secrets> = {};
   try {
-    const enc = await readEncryptedSecrets();
+    const enc = await readEncryptedSecrets(userId);
     if (enc) saved = JSON.parse(decrypt(enc)) as Partial<Secrets>;
   } catch {
     saved = {};
@@ -155,8 +199,8 @@ export async function readSecrets(): Promise<Secrets> {
   return merged;
 }
 
-export async function writeSecrets(secrets: Secrets): Promise<Secrets> {
-  await writeEncryptedSecrets(encrypt(JSON.stringify(secrets)));
+export async function writeSecrets(userId: string, secrets: Secrets): Promise<Secrets> {
+  await writeEncryptedSecrets(userId, encrypt(JSON.stringify(secrets)));
   return secrets;
 }
 

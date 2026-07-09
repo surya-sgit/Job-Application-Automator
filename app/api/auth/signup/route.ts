@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { findUserByEmail, USE_DB } from "@/lib/store";
-import { verifyPassword, signSession, SESSION_COOKIE } from "@/lib/auth";
+import { createUser, findUserByEmail, USE_DB } from "@/lib/store";
+import { hashPassword, signSession, SESSION_COOKIE } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 const BodySchema = z.object({
   email: z.string().email("Please enter a valid email."),
-  password: z.string().min(1, "Password is required."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
 export async function POST(req: NextRequest) {
   if (!USE_DB) {
     return NextResponse.json(
-      { error: "Accounts require a database. Set DATABASE_URL to enable login." },
+      { error: "Accounts require a database. Set DATABASE_URL to enable signup." },
       { status: 400 }
     );
   }
@@ -24,12 +24,15 @@ export async function POST(req: NextRequest) {
   }
   const { email, password } = parsed.data;
 
-  const user = await findUserByEmail(email);
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+  const existing = await findUserByEmail(email);
+  if (existing) {
+    return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
   }
 
+  const passwordHash = await hashPassword(password);
+  const user = await createUser(email, passwordHash);
   const token = await signSession({ id: user.id, email: user.email });
+
   const res = NextResponse.json({ ok: true, email: user.email });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

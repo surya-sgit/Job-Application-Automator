@@ -36,6 +36,13 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
+  const [importMode, setImportMode] = useState<"file" | "paste">("file");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importText, setImportText] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importMsg, setImportMsg] = useState("");
+
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
@@ -59,6 +66,47 @@ export default function ProfilePage() {
     });
     setSaving(false);
     setMsg(res.ok ? "Profile saved." : "Failed to save.");
+  }
+
+  async function importResume() {
+    setImportError("");
+    setImportMsg("");
+    setImportBusy(true);
+    try {
+      let res: Response;
+      if (importMode === "file") {
+        if (!importFile) {
+          setImportError("Choose a file first.");
+          setImportBusy(false);
+          return;
+        }
+        const form = new FormData();
+        form.append("file", importFile);
+        res = await fetch("/api/profile/parse", { method: "POST", body: form });
+      } else {
+        if (importText.trim().length < 40) {
+          setImportError("Paste more of your resume text first.");
+          setImportBusy(false);
+          return;
+        }
+        res = await fetch("/api/profile/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: importText }),
+        });
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        setImportError(data.error || "Couldn't parse that resume.");
+        return;
+      }
+      setP({ ...EMPTY, ...data.profile });
+      setImportMsg("Parsed! Review the fields below, then click Save profile.");
+    } catch {
+      setImportError("Couldn't parse that resume.");
+    } finally {
+      setImportBusy(false);
+    }
   }
 
   // ---- project helpers ----
@@ -101,6 +149,51 @@ export default function ProfilePage() {
           Fill this once. Add all your projects — the tool automatically picks the ones that match
           each job description.
         </p>
+      </div>
+
+      {/* Import from resume */}
+      <div className="card space-y-4">
+        <div>
+          <h2 className="font-semibold">Import from an existing resume</h2>
+          <p className="text-sm text-slate-500">
+            Upload a resume or paste its text — AI fills the form below using your own API key
+            (configured in Settings). Nothing is saved until you click Save profile.
+          </p>
+        </div>
+        <div className="flex gap-2 text-sm">
+          <button
+            className={importMode === "file" ? "btn-primary" : "btn-ghost"}
+            onClick={() => setImportMode("file")}
+          >
+            Upload file
+          </button>
+          <button
+            className={importMode === "paste" ? "btn-primary" : "btn-ghost"}
+            onClick={() => setImportMode("paste")}
+          >
+            Paste text
+          </button>
+        </div>
+        {importMode === "file" ? (
+          <input
+            className="input"
+            type="file"
+            accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+          />
+        ) : (
+          <textarea
+            className="input min-h-[140px] font-mono text-sm"
+            placeholder="Paste your resume text here…"
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+          />
+        )}
+        <button className="btn-primary" onClick={importResume} disabled={importBusy}>
+          {importBusy ? "Parsing…" : "Parse & fill form"}
+        </button>
+        {importError && <p className="text-sm text-red-600">{importError}</p>}
+        {importMsg && <p className="text-sm text-green-700">{importMsg}</p>}
       </div>
 
       {/* Basics */}

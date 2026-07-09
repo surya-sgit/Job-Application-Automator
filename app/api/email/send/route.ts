@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 import { readSecrets } from "@/lib/store";
+import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { TailoredResumeSchema } from "@/lib/resumeSchema";
 import { renderResumePdf, resumeFilename } from "@/lib/pdf";
 
@@ -31,15 +32,16 @@ export async function POST(req: NextRequest) {
   }
   const { to, subject, body, resume, cc } = parsed.data;
 
-  const secrets = await readSecrets();
-  if (!secrets.gmailUser || !secrets.gmailAppPassword) {
-    return NextResponse.json(
-      { error: "Gmail is not configured. Add your Gmail address + App Password in Settings." },
-      { status: 400 }
-    );
-  }
-
   try {
+    const userId = await requireUserId();
+    const secrets = await readSecrets(userId);
+    if (!secrets.gmailUser || !secrets.gmailAppPassword) {
+      return NextResponse.json(
+        { error: "Gmail is not configured. Add your Gmail address + App Password in Settings." },
+        { status: 400 }
+      );
+    }
+
     const pdf = await renderResumePdf(resume);
 
     const transporter = nodemailer.createTransport({
@@ -61,6 +63,9 @@ export async function POST(req: NextRequest) {
     console.log(`[email/send] sent to ${to} id=${info.messageId}`);
     return NextResponse.json({ ok: true, messageId: info.messageId });
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
     console.error("[email/send] error", err);
     const msg = (err as Error).message || "Failed to send email.";
     return NextResponse.json({ error: msg }, { status: 500 });

@@ -1,30 +1,26 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  );
-}
-
-function LoginForm() {
+export default function SignupPage() {
   const router = useRouter();
-  const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError("");
-    const res = await fetch("/api/auth/login", {
+    if (password !== confirm) {
+      setError("Passwords don't match.");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -32,10 +28,10 @@ function LoginForm() {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Login failed.");
+      setError(data.error || "Signup failed.");
       return;
     }
-    router.push(params.get("next") || "/");
+    router.push("/");
     router.refresh();
   }
 
@@ -44,7 +40,7 @@ function LoginForm() {
       <div className="card space-y-4">
         <div>
           <h1 className="text-xl font-bold">🎯 Job Application Automator</h1>
-          <p className="text-sm text-slate-500">Log in to your account.</p>
+          <p className="text-sm text-slate-500">Create your account.</p>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <div>
@@ -63,20 +59,33 @@ function LoginForm() {
             <input
               className="input"
               type="password"
-              placeholder="Password"
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          <div>
+            <label className="label">Confirm password</label>
+            <input
+              className="input"
+              type="password"
+              placeholder="Repeat password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button className="btn-primary w-full" disabled={busy || !email || !password}>
-            {busy ? "Signing in…" : "Log in"}
+          <button
+            className="btn-primary w-full"
+            disabled={busy || !email || password.length < 8 || !confirm}
+          >
+            {busy ? "Creating account…" : "Sign up"}
           </button>
         </form>
         <p className="text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-brand underline">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-brand underline">
+            Log in
           </Link>
         </p>
       </div>

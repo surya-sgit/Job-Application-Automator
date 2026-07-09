@@ -52,6 +52,51 @@ export const ProfileSchema = z.object({
 export type Profile = z.infer<typeof ProfileSchema>;
 
 /**
+ * Lenient shape for AI-extracted resume data (import/parse flow). No `id`
+ * fields (the server assigns those) and everything defaults to empty, since
+ * real-world resumes are messy and any field may be missing.
+ */
+export const ParsedProjectSchema = z.object({
+  title: z.string().default(""),
+  role: z.string().default(""),
+  stack: z.array(z.string()).default([]),
+  description: z.string().default(""),
+  bullets: z.array(z.string()).default([]),
+  link: z.string().default(""),
+});
+
+export const ParsedExperienceSchema = z.object({
+  company: z.string().default(""),
+  title: z.string().default(""),
+  location: z.string().default(""),
+  start: z.string().default(""),
+  end: z.string().default(""),
+  bullets: z.array(z.string()).default([]),
+});
+
+export const ParsedEducationSchema = z.object({
+  school: z.string().default(""),
+  degree: z.string().default(""),
+  year: z.string().default(""),
+  details: z.string().default(""),
+});
+
+export const ParsedProfileSchema = z.object({
+  name: z.string().default(""),
+  title: z.string().default(""),
+  email: z.string().default(""),
+  phone: z.string().default(""),
+  location: z.string().default(""),
+  links: z.array(z.string()).default([]),
+  summary: z.string().default(""),
+  skills: z.array(z.string()).default([]),
+  projects: z.array(ParsedProjectSchema).default([]),
+  experience: z.array(ParsedExperienceSchema).default([]),
+  education: z.array(ParsedEducationSchema).default([]),
+});
+export type ParsedProfile = z.infer<typeof ParsedProfileSchema>;
+
+/**
  * The tailored resume produced by the AI for a specific JD. This is what the
  * PDF template renders. Kept tight so output tokens stay small.
  */

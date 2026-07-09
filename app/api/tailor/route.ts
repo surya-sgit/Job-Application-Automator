@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
 import { readProfile, readSecrets } from "@/lib/store";
+import { requireUserId, UnauthorizedError } from "@/lib/session";
 import {
   JdAnalysisSchema,
   QuestionsSchema,
@@ -39,11 +40,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
   }
   const { action, analysis, projects, answers } = parsed.data;
-  const profile = await readProfile();
-  const secrets = await readSecrets();
-  const context = tailorContext(analysis, profile, projects, answers);
 
   try {
+    const userId = await requireUserId();
+    const profile = await readProfile(userId);
+    const secrets = await readSecrets(userId);
+    const context = tailorContext(analysis, profile, projects, answers);
+
     if (action === "questions") {
       const { object, usage } = await generateObject({
         model: await getModel({ cheap: true, secrets }),
@@ -65,6 +68,9 @@ export async function POST(req: NextRequest) {
     console.log(`[tailor:generate] ${describeConfig(secrets)} tokens=`, usage);
     return NextResponse.json({ resume: object, usage });
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
     if (err instanceof MissingKeyError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }

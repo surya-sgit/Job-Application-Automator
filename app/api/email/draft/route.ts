@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
 import { readSecrets } from "@/lib/store";
+import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { EmailDraftSchema, JdAnalysisSchema, TailoredResumeSchema } from "@/lib/resumeSchema";
 import { EMAIL_SYSTEM, emailUser } from "@/lib/prompts";
 import { z } from "zod";
@@ -32,7 +33,8 @@ export async function POST(req: NextRequest) {
     .slice(0, 3);
 
   try {
-    const secrets = await readSecrets();
+    const userId = await requireUserId();
+    const secrets = await readSecrets(userId);
     const { object, usage } = await generateObject({
       model: await getModel({ cheap: true, secrets }),
       schema: EmailDraftSchema,
@@ -47,6 +49,9 @@ export async function POST(req: NextRequest) {
     console.log(`[email/draft] ${describeConfig(secrets)} tokens=`, usage);
     return NextResponse.json({ draft: object, usage });
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
     if (err instanceof MissingKeyError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
