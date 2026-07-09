@@ -5,11 +5,8 @@ import { Profile, ProfileSchema } from "./resumeSchema";
 
 /**
  * Storage layer with two backends:
- *   - Upstash Redis (attached via the Vercel Marketplace "Redis"/Upstash
- *     integration) when its env vars are present — this is what makes
- *     profile/secrets persist on a serverless host. Supports both the
- *     `UPSTASH_REDIS_REST_*` naming and the legacy `KV_REST_API_*` naming,
- *     since different integration flows inject different names.
+ *   - Postgres (Neon), a single key/value table, when DATABASE_URL is set —
+ *     this is what makes profile/secrets persist on a serverless host.
  *   - Local JSON files under /data (gitignored) otherwise, for local dev.
  *
  * profile.json is plaintext (it's yours); secrets are always AES-encrypted
@@ -20,32 +17,56 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const PROFILE_FILE = path.join(DATA_DIR, "profile.json");
 const SECRETS_FILE = path.join(DATA_DIR, "secrets.json");
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-const USE_KV = !!REDIS_URL && !!REDIS_TOKEN;
+const USE_DB = !!process.env.DATABASE_URL;
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-let redisSingleton: import("@upstash/redis").Redis | null = null;
-async function kvClient() {
-  if (!redisSingleton) {
-    const { Redis } = await import("@upstash/redis");
-    redisSingleton = new Redis({ url: REDIS_URL!, token: REDIS_TOKEN! });
+type Sql = import("@neondatabase/serverless").NeonQueryFunction<false, false>;
+let sqlSingleton: Sql | null = null;
+let schemaReady: Promise<void> | null = null;
+
+async function db(): Promise<Sql> {
+  if (!sqlSingleton) {
+    const { neon } = await import("@neondatabase/serverless");
+    sqlSingleton = neon(process.env.DATABASE_URL!);
   }
-  return redisSingleton;
+  if (!schemaReady) {
+    schemaReady = sqlSingleton`
+      CREATE TABLE IF NOT EXISTS app_kv (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `.then(() => undefined);
+  }
+  await schemaReady;
+  return sqlSingleton;
+}
+
+async function kvGet(key: string): Promise<string | null> {
+  const sql = await db();
+  const rows = (await sql`SELECT value FROM app_kv WHERE key = ${key}`) as Array<{ value: string }>;
+  return rows[0]?.value ?? null;
+}
+
+async function kvSet(key: string, value: string): Promise<void> {
+  const sql = await db();
+  await sql`
+    INSERT INTO app_kv (key, value, updated_at) VALUES (${key}, ${value}, now())
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+  `;
 }
 
 // ---------- Profile ----------
 
 export async function readProfile(): Promise<Profile> {
   try {
-    if (USE_KV) {
-      const kv = await kvClient();
-      const raw = await kv.get<string>("profile");
+    if (USE_DB) {
+      const raw = await kvGet("profile");
       if (!raw) return ProfileSchema.parse({});
-      return ProfileSchema.parse(typeof raw === "string" ? JSON.parse(raw) : raw);
+      return ProfileSchema.parse(JSON.parse(raw));
     }
     if (!fs.existsSync(PROFILE_FILE)) return ProfileSchema.parse({});
     const raw = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf8"));
@@ -57,9 +78,8 @@ export async function readProfile(): Promise<Profile> {
 
 export async function writeProfile(profile: Profile): Promise<Profile> {
   const parsed = ProfileSchema.parse(profile);
-  if (USE_KV) {
-    const kv = await kvClient();
-    await kv.set("profile", JSON.stringify(parsed));
+  if (USE_DB) {
+    await kvSet("profile", JSON.stringify(parsed));
     return parsed;
   }
   ensureDir();
@@ -95,18 +115,14 @@ const DEFAULT_SECRETS: Secrets = {
 };
 
 async function readEncryptedSecrets(): Promise<string | null> {
-  if (USE_KV) {
-    const kv = await kvClient();
-    return (await kv.get<string>("secrets")) ?? null;
-  }
+  if (USE_DB) return kvGet("secrets");
   if (!fs.existsSync(SECRETS_FILE)) return null;
   return fs.readFileSync(SECRETS_FILE, "utf8");
 }
 
 async function writeEncryptedSecrets(payload: string): Promise<void> {
-  if (USE_KV) {
-    const kv = await kvClient();
-    await kv.set("secrets", payload);
+  if (USE_DB) {
+    await kvSet("secrets", payload);
     return;
   }
   ensureDir();
