@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import { generateObject } from "ai";
+import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
+import { readSecrets } from "@/lib/store";
+import { EmailDraftSchema, JdAnalysisSchema, TailoredResumeSchema } from "@/lib/resumeSchema";
+import { EMAIL_SYSTEM, emailUser } from "@/lib/prompts";
+import { z } from "zod";
+
+export const runtime = "nodejs";
+
+const BodySchema = z.object({
+  analysis: JdAnalysisSchema,
+  resume: TailoredResumeSchema,
+  company: z.string().optional(),
+});
+
+/** Draft the application email. Uses the cheap model — it's a short output. */
+export async function POST(req: NextRequest) {
+  const parsed = BodySchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
+  }
+  const { analysis, resume, company } = parsed.data;
+
+  // Derive top points locally to keep the prompt tiny.
+  const topPoints = [
+    resume.summary,
+    ...(resume.experience[0]?.bullets?.slice(0, 1) || []),
+    ...(resume.projects[0]?.bullets?.slice(0, 1) || []),
+  ]
+    .filter(Boolean)
+    .slice(0, 3);
+
+  try {
+    const secrets = await readSecrets();
+    const { object, usage } = await generateObject({
+      model: await getModel({ cheap: true, secrets }),
+      schema: EmailDraftSchema,
+      system: EMAIL_SYSTEM,
+      prompt: emailUser({
+        jobTitle: analysis.jobTitle || resume.title,
+        company,
+        candidateName: resume.name,
+        topPoints,
+      }),
+    });
+    console.log(`[email/draft] ${describeConfig(secrets)} tokens=`, usage);
+    return NextResponse.json({ draft: object, usage });
+  } catch (err) {
+    if (err instanceof MissingKeyError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
+    console.error("[email/draft] error", err);
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+  }
+}
