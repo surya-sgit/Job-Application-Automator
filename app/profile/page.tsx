@@ -30,6 +30,77 @@ const toList = (s: string) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
+const norm = (s: string) => s.trim().toLowerCase();
+
+function dedupeStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of items) {
+    const key = norm(item);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item.trim());
+  }
+  return out;
+}
+
+interface MergeSummary {
+  projects: number;
+  experience: number;
+  education: number;
+}
+
+/**
+ * Merges freshly-parsed resume data into the existing profile as an edit,
+ * not a replace: blank scalar fields get filled in, lists get deduped and
+ * appended to, and only genuinely new projects/experience/education entries
+ * (by title / company+title / school+degree) are added.
+ */
+function mergeProfile(
+  existing: Profile,
+  parsed: Profile,
+  replaceBasics: boolean
+): { profile: Profile; summary: MergeSummary } {
+  const pick = (a: string, b: string) => (replaceBasics ? b || a : a || b);
+
+  const newProjects = parsed.projects.filter(
+    (np) => !existing.projects.some((ep) => norm(ep.title) === norm(np.title))
+  );
+  const newExperience = parsed.experience.filter(
+    (ne) =>
+      !existing.experience.some(
+        (ee) => norm(ee.company) === norm(ne.company) && norm(ee.title) === norm(ne.title)
+      )
+  );
+  const newEducation = parsed.education.filter(
+    (nd) =>
+      !existing.education.some(
+        (ed) => norm(ed.school) === norm(nd.school) && norm(ed.degree) === norm(nd.degree)
+      )
+  );
+
+  return {
+    profile: {
+      name: pick(existing.name, parsed.name),
+      title: pick(existing.title, parsed.title),
+      email: pick(existing.email, parsed.email),
+      phone: pick(existing.phone, parsed.phone),
+      location: pick(existing.location, parsed.location),
+      summary: pick(existing.summary, parsed.summary),
+      links: dedupeStrings([...existing.links, ...parsed.links]),
+      skills: dedupeStrings([...existing.skills, ...parsed.skills]),
+      projects: [...existing.projects, ...newProjects],
+      experience: [...existing.experience, ...newExperience],
+      education: [...existing.education, ...newEducation],
+    },
+    summary: {
+      projects: newProjects.length,
+      experience: newExperience.length,
+      education: newEducation.length,
+    },
+  };
+}
+
 export default function ProfilePage() {
   const [p, setP] = useState<Profile>(EMPTY);
   const [loaded, setLoaded] = useState(false);
@@ -42,6 +113,7 @@ export default function ProfilePage() {
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState("");
   const [importMsg, setImportMsg] = useState("");
+  const [replaceBasics, setReplaceBasics] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -100,8 +172,18 @@ export default function ProfilePage() {
         setImportError(data.error || "Couldn't parse that resume.");
         return;
       }
-      setP({ ...EMPTY, ...data.profile });
-      setImportMsg("Parsed! Review the fields below, then click Save profile.");
+      const parsed: Profile = { ...EMPTY, ...data.profile };
+      const { profile: merged, summary } = mergeProfile(p, parsed, replaceBasics);
+      setP(merged);
+
+      const parts = [
+        summary.projects && `${summary.projects} new project(s)`,
+        summary.experience && `${summary.experience} new experience entr${summary.experience === 1 ? "y" : "ies"}`,
+        summary.education && `${summary.education} new education entr${summary.education === 1 ? "y" : "ies"}`,
+      ].filter(Boolean);
+      const addedText = parts.length ? `Added ${parts.join(", ")}.` : "No new projects/experience/education found.";
+      const tokenText = data.usage?.totalTokens ? ` (~${data.usage.totalTokens} tokens)` : "";
+      setImportMsg(`${addedText}${tokenText} Review below, then click Save profile.`);
     } catch {
       setImportError("Couldn't parse that resume.");
     } finally {
@@ -156,8 +238,10 @@ export default function ProfilePage() {
         <div>
           <h2 className="font-semibold">Import from an existing resume</h2>
           <p className="text-sm text-slate-500">
-            Upload a resume or paste its text — AI fills the form below using your own API key
-            (configured in Settings). Nothing is saved until you click Save profile.
+            Upload a resume or paste its text — AI merges it into your profile below using your
+            own API key (configured in Settings). Existing entries are kept; new projects,
+            experience, and education are added alongside them. Nothing is saved until you click
+            Save profile.
           </p>
         </div>
         <div className="flex gap-2 text-sm">
@@ -189,8 +273,16 @@ export default function ProfilePage() {
             onChange={(e) => setImportText(e.target.value)}
           />
         )}
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={replaceBasics}
+            onChange={(e) => setReplaceBasics(e.target.checked)}
+          />
+          Also replace basic info (name, title, contact, summary) with the parsed values
+        </label>
         <button className="btn-primary" onClick={importResume} disabled={importBusy}>
-          {importBusy ? "Parsing…" : "Parse & fill form"}
+          {importBusy ? "Parsing…" : "Parse & merge into profile"}
         </button>
         {importError && <p className="text-sm text-red-600">{importError}</p>}
         {importMsg && <p className="text-sm text-green-700">{importMsg}</p>}

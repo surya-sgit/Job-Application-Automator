@@ -6,7 +6,7 @@ import { readSecrets } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { ParsedProfileSchema, ProfileSchema } from "@/lib/resumeSchema";
 import { RESUME_PARSE_SYSTEM, resumeParseUser } from "@/lib/prompts";
-import { extractTextFromFile } from "@/lib/resumeParse";
+import { extractTextFromFile, cleanResumeText } from "@/lib/resumeParse";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
       text = typeof body.text === "string" ? body.text : "";
     }
 
+    text = cleanResumeText(text);
+
     if (!text || text.trim().length < 40) {
       return NextResponse.json(
         { error: "Couldn't find enough resume text to parse. Try pasting the text directly." },
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const secrets = await readSecrets(userId);
     const { object, usage } = await generateObject({
-      model: await getModel({ secrets }),
+      model: await getModel({ cheap: true, secrets }),
       schema: ParsedProfileSchema,
       system: RESUME_PARSE_SYSTEM,
       prompt: resumeParseUser(text),

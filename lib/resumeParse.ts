@@ -29,3 +29,22 @@ export async function extractTextFromFile(
 
   return buffer.toString("utf8");
 }
+
+/**
+ * Strips the noise raw PDF/DOCX extraction tends to leave behind (repeated
+ * blank lines, trailing spaces, stray control characters, page-break
+ * artifacts) before the text reaches the model — pure token savings, since
+ * none of this carries information, and less clutter tends to help
+ * extraction accuracy too.
+ */
+export function cleanResumeText(text: string): string {
+  return text
+    .replace(/\r\n?/g, "\n")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

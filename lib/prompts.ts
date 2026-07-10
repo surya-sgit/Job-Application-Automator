@@ -15,16 +15,13 @@ export function analyzeUser(jd: string): string {
 }
 
 export const RESUME_PARSE_SYSTEM =
-  "You extract structured profile data from a raw resume/CV text dump. Extract " +
-  "the person's name, headline/title, contact info (email, phone, location), " +
-  "links (portfolio, GitHub, LinkedIn, etc.), a professional summary (write a " +
-  "short one from the content if none is present), skills, distinct projects, " +
-  "work experience entries, and education entries. Preserve the resume's own " +
-  "wording for bullets where reasonable. Do NOT invent employers, dates, degrees, " +
-  "or accomplishments that aren't in the text. Leave a field empty if it isn't present.";
+  "You extract structured profile data from a resume/CV. Return ONLY the requested " +
+  "fields: name, headline, contact info, links, summary, skills, projects, experience, " +
+  "education. Preserve the resume's own wording for bullets. Never invent employers, " +
+  "dates, degrees, or accomplishments not in the text. Leave a field empty if absent.";
 
 export function resumeParseUser(text: string): string {
-  return `Resume text:\n"""\n${text.slice(0, 12000)}\n"""\n\nExtract the structured profile now.`;
+  return `Resume text:\n"""\n${text.slice(0, 20000)}\n"""\n\nExtract the structured profile now.`;
 }
 
 export const QUESTIONS_SYSTEM =
