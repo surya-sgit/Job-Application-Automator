@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE, verifySession } from "@/lib/auth";
+import { SESSION_COOKIE, verifySession } from "@/lib/jwt";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/api/auth/login", "/api/auth/signup"];
 
@@ -12,7 +12,8 @@ export async function proxy(req: NextRequest) {
   if (!process.env.DATABASE_URL) return NextResponse.next();
 
   const { pathname } = req.nextUrl;
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  // "/" is public (exact match only — the page itself decides landing vs app).
+  if (pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 

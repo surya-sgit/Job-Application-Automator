@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/clientFetch";
 
 interface RedactedSettings {
   provider: string;
@@ -42,10 +43,12 @@ export default function SettingsPage() {
   const [keys, setKeys] = useState({ anthropic: "", openai: "", google: "", groq: "" });
   const [gmailAppPassword, setGmailAppPassword] = useState("");
 
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((s: RedactedSettings) => {
+  const [loadError, setLoadError] = useState("");
+
+  function load() {
+    setLoadError("");
+    fetchJson<RedactedSettings>("/api/settings")
+      .then((s) => {
         setProvider(s.provider);
         setModel(s.model);
         setCheapModel(s.cheapModel);
@@ -54,8 +57,11 @@ export default function SettingsPage() {
         setPlaceholders(s.keys);
         setGmailPwSet(s.gmailAppPasswordSet);
         setLoaded(true);
-      });
-  }, []);
+      })
+      .catch((e: Error) => setLoadError(e.message));
+  }
+
+  useEffect(load, []);
 
   async function save() {
     setSaving(true);
@@ -80,12 +86,21 @@ export default function SettingsPage() {
       setGmailPwSet(s.gmailAppPasswordSet);
       setKeys({ anthropic: "", openai: "", google: "", groq: "" });
       setGmailAppPassword("");
-      setMsg("Saved. Keys are stored encrypted in data/secrets.json.");
+      setMsg("Saved. Keys are stored encrypted.");
     } else {
       setMsg("Failed to save.");
     }
   }
 
+  if (loadError)
+    return (
+      <div className="card max-w-md space-y-3">
+        <p className="text-sm text-red-700">Couldn&apos;t load settings: {loadError}</p>
+        <button className="btn-ghost" onClick={load}>
+          Retry
+        </button>
+      </div>
+    );
   if (!loaded) return <p className="text-slate-500">Loading…</p>;
 
   const keyField = (id: keyof typeof keys, label: string) => (

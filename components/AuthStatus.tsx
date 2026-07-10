@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-/** Shows the signed-in user's email + logout, or a login link. Hidden when accounts aren't enabled (no DATABASE_URL). */
+const APP_LINKS = [
+  { href: "/", label: "Tailor" },
+  { href: "/profile", label: "Profile" },
+  { href: "/settings", label: "Settings" },
+];
+
+/**
+ * Auth-aware nav: app links + email/logout when signed in (or when accounts
+ * are disabled in local mode), Log in + Sign up buttons when signed out.
+ */
 export default function AuthStatus() {
   const router = useRouter();
   const [state, setState] = useState<{ email: string | null; accountsEnabled: boolean } | null>(null);
@@ -16,13 +25,20 @@ export default function AuthStatus() {
       .catch(() => setState({ email: null, accountsEnabled: false }));
   }, []);
 
-  if (!state || !state.accountsEnabled) return null;
+  if (!state) return null;
 
-  if (!state.email) {
+  const signedIn = !state.accountsEnabled || !!state.email;
+
+  if (!signedIn) {
     return (
-      <Link href="/login" className="rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100">
-        Log in
-      </Link>
+      <div className="flex items-center gap-2 text-sm">
+        <Link href="/login" className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
+          Log in
+        </Link>
+        <Link href="/signup" className="btn-primary px-3 py-1.5 text-sm">
+          Sign up
+        </Link>
+      </div>
     );
   }
 
@@ -33,11 +49,20 @@ export default function AuthStatus() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-slate-500">{state.email}</span>
-      <button onClick={logout} className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
-        Log out
-      </button>
+    <div className="flex items-center gap-1 text-sm">
+      {APP_LINKS.map((l) => (
+        <Link key={l.href} href={l.href} className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
+          {l.label}
+        </Link>
+      ))}
+      {state.accountsEnabled && state.email && (
+        <>
+          <span className="ml-2 hidden text-slate-400 sm:inline">{state.email}</span>
+          <button onClick={logout} className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
+            Log out
+          </button>
+        </>
+      )}
     </div>
   );
 }

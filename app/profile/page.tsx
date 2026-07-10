@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/clientFetch";
 import type { Profile, Project, Experience, Education } from "@/lib/resumeSchema";
 
 const EMPTY: Profile = {
@@ -115,14 +116,19 @@ export default function ProfilePage() {
   const [importMsg, setImportMsg] = useState("");
   const [replaceBasics, setReplaceBasics] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((data: Profile) => {
+  const [loadError, setLoadError] = useState("");
+
+  function load() {
+    setLoadError("");
+    fetchJson<Profile>("/api/profile")
+      .then((data) => {
         setP({ ...EMPTY, ...data });
         setLoaded(true);
-      });
-  }, []);
+      })
+      .catch((e: Error) => setLoadError(e.message));
+  }
+
+  useEffect(load, []);
 
   function set<K extends keyof Profile>(key: K, val: Profile[K]) {
     setP((prev) => ({ ...prev, [key]: val }));
@@ -221,6 +227,15 @@ export default function ProfilePage() {
   const removeEdu = (id: string) =>
     set("education", p.education.filter((x) => x.id !== id));
 
+  if (loadError)
+    return (
+      <div className="card max-w-md space-y-3">
+        <p className="text-sm text-red-700">Couldn&apos;t load your profile: {loadError}</p>
+        <button className="btn-ghost" onClick={load}>
+          Retry
+        </button>
+      </div>
+    );
   if (!loaded) return <p className="text-slate-500">Loading…</p>;
 
   return (

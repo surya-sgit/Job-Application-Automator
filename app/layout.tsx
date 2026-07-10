@@ -19,15 +19,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="text-xl">🎯</span> Job Application Automator
               </Link>
               <nav className="flex items-center gap-1 text-sm">
-                <Link href="/" className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
-                  Tailor
-                </Link>
-                <Link href="/profile" className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
-                  Profile
-                </Link>
-                <Link href="/settings" className="rounded-lg px-3 py-1.5 hover:bg-slate-100">
-                  Settings
-                </Link>
                 <AuthStatus />
               </nav>
             </div>
