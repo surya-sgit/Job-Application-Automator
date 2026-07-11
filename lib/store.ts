@@ -197,8 +197,11 @@ export async function readSecrets(userId: string): Promise<Secrets> {
       groq: saved.keys?.groq || process.env.GROQ_API_KEY || "",
     },
     ollamaBaseUrl: saved.ollamaBaseUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    emailProvider: saved.emailProvider || "gmail",
     gmailUser: saved.gmailUser || process.env.GMAIL_USER || "",
     gmailAppPassword: saved.gmailAppPassword || process.env.GMAIL_APP_PASSWORD || "",
+    outlookUser: saved.outlookUser || "",
+    outlookAppPassword: saved.outlookAppPassword || "",
   };
   return merged;
 }
@@ -216,7 +219,9 @@ export function redactSecrets(s: Secrets) {
     model: s.model,
     cheapModel: s.cheapModel,
     ollamaBaseUrl: s.ollamaBaseUrl,
+    emailProvider: s.emailProvider,
     gmailUser: s.gmailUser,
+    outlookUser: s.outlookUser,
     keys: {
       anthropic: mask(s.keys.anthropic),
       openai: mask(s.keys.openai),
@@ -224,6 +229,7 @@ export function redactSecrets(s: Secrets) {
       groq: mask(s.keys.groq),
     },
     gmailAppPasswordSet: !!s.gmailAppPassword,
+    outlookAppPasswordSet: !!s.outlookAppPassword,
   };
 }
 

@@ -39,8 +39,11 @@ export async function POST(req: NextRequest) {
       model: body.model || current.model,
       cheapModel: body.cheapModel || current.cheapModel,
       ollamaBaseUrl: body.ollamaBaseUrl || current.ollamaBaseUrl,
+      emailProvider: body.emailProvider || current.emailProvider,
       gmailUser: body.gmailUser ?? current.gmailUser,
       gmailAppPassword: keepIfMasked(body.gmailAppPassword, current.gmailAppPassword),
+      outlookUser: body.outlookUser ?? current.outlookUser,
+      outlookAppPassword: keepIfMasked(body.outlookAppPassword, current.outlookAppPassword),
       keys: {
         anthropic: keepIfMasked(body.keys?.anthropic, current.keys.anthropic),
         openai: keepIfMasked(body.keys?.openai, current.keys.openai),
