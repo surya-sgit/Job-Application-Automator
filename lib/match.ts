@@ -91,7 +91,7 @@ export function scoreProjects(projects: Project[], analysis: JdAnalysis): Scored
 export function selectProjects(
   projects: Project[],
   analysis: JdAnalysis,
-  topN = 4
+  topN = 2
 ): ScoredProject[] {
   if (projects.length === 0) return [];
   const scored = scoreProjects(projects, analysis);

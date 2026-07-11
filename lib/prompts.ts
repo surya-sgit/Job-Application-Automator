@@ -11,7 +11,7 @@ export const ANALYZE_SYSTEM =
   "Return ONLY the requested fields. Be concise: short skill/keyword tokens, not sentences.";
 
 export function analyzeUser(jd: string): string {
-  return `Job description:\n"""\n${jd.slice(0, 6000)}\n"""\n\nExtract the job title, seniority, hard skills, soft skills, ATS keywords, and key responsibilities.`;
+  return `Job description:\n"""\n${jd.slice(0, 3000)}\n"""\n\nExtract the job title, seniority, hard skills, soft skills, ATS keywords, and key responsibilities.`;
 }
 
 export const RESUME_PARSE_SYSTEM =
@@ -21,7 +21,7 @@ export const RESUME_PARSE_SYSTEM =
   "dates, degrees, or accomplishments not in the text. Leave a field empty if absent.";
 
 export function resumeParseUser(text: string): string {
-  return `Resume text:\n"""\n${text.slice(0, 20000)}\n"""\n\nExtract the structured profile now.`;
+  return `Resume text:\n"""\n${text.slice(0, 10000)}\n"""\n\nExtract the structured profile now.`;
 }
 
 export const QUESTIONS_SYSTEM =
