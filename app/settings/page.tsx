@@ -270,18 +270,26 @@ export default function SettingsPage() {
             (requires 2-Step Verification), not your normal password.
           </p>
         ) : (
-          <p className="text-xs text-slate-400">
-            Use a Microsoft{" "}
-            <a
-              className="text-brand underline"
-              href="https://account.live.com/proofs/manage/additional"
-              target="_blank"
-              rel="noreferrer"
-            >
-              App Password
-            </a>{" "}
-            (requires 2-Step Verification), not your normal password.
-          </p>
+          <div className="text-xs text-slate-400 space-y-2">
+            <p>
+              Use a Microsoft{" "}
+              <a
+                className="text-brand underline"
+                href="https://account.live.com/proofs/manage/additional"
+                target="_blank"
+                rel="noreferrer"
+              >
+                App Password
+              </a>{" "}
+              (requires 2-Step Verification), not your normal password.
+            </p>
+            <p className="text-amber-600 font-semibold">
+              Getting a "535 5.7.139 basic authentication is disabled" error?
+            </p>
+            <p>
+              Microsoft disables SMTP by default. If this is a work/school account, your IT admin must enable <b>Authenticated SMTP</b> for your mailbox in the Microsoft 365 Admin Center and disable Azure Security Defaults.
+            </p>
+          </div>
         )}
       </div>
 

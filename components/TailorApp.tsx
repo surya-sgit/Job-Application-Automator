@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ResumePreview from "@/components/ResumePreview";
+import ResumeEditor from "@/components/ResumeEditor";
 import { fetchJson } from "@/lib/clientFetch";
 import type { JdAnalysis, TailoredResume, Project } from "@/lib/resumeSchema";
 
@@ -20,12 +21,13 @@ interface SavedResume {
   jdSnippet: string;
 }
 
-type Step = "input" | "review" | "questions" | "resume";
+type Step = "input" | "review" | "questions" | "edit" | "resume";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "input", label: "Job description" },
   { key: "review", label: "Review & approve" },
   { key: "questions", label: "Questions" },
+  { key: "edit", label: "Review & edit draft" },
   { key: "resume", label: "Resume & email" },
 ];
 
@@ -36,14 +38,17 @@ export default function TailorApp() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [profileEmpty, setProfileEmpty] = useState(false);
+  const [rawProfile, setRawProfile] = useState<any>(null);
 
   const [analysis, setAnalysis] = useState<JdAnalysis | null>(null);
   const [matched, setMatched] = useState<Matched[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(new Set());
   const [approvedProjects, setApprovedProjects] = useState<Project[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [draftResume, setDraftResume] = useState<TailoredResume | null>(null);
   const [resume, setResume] = useState<TailoredResume | null>(null);
   const [useLatex, setUseLatex] = useState(false);
   const [latexOutput, setLatexOutput] = useState("");
@@ -65,15 +70,25 @@ export default function TailorApp() {
 
   // Best-effort empty-profile guard — never blocks the flow.
   useEffect(() => {
-    fetchJson<{ projects: unknown[]; experience: unknown[] }>("/api/profile")
-      .then((p) => setProfileEmpty(p.projects.length === 0 && p.experience.length === 0))
+    fetchJson<any>("/api/profile")
+      .then((p) => {
+        setProfileEmpty(p.projects.length === 0 && p.experience.length === 0);
+        setRawProfile(p);
+      })
       .catch(() => {});
   }, []);
 
   // Load saved resumes on mount
   useEffect(() => {
     fetchJson<{ resumes: SavedResume[] }>("/api/resumes")
-      .then((r) => setSavedResumes(r.resumes || []))
+      .then((r) => {
+        const res = r.resumes || [];
+        setSavedResumes(res);
+        if (res.length > 0) {
+          // Pre-select the first resume for Tweak Mode by default
+          setSelectedBaseId((prev) => prev || res[0].id);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -114,12 +129,18 @@ export default function TailorApp() {
   }
 
   function toggleProject(id: string) {
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(checkedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setCheckedIds(next);
+  }
+
+  function toggleExpandedProject(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const next = new Set(expandedProjectIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpandedProjectIds(next);
   }
 
   // Step 2 → 3: user approved the analysis + project selection.
@@ -170,11 +191,12 @@ export default function TailorApp() {
       if (r.latex) {
         setLatexOutput(r.latex);
         setResume(null);
+        setStep("resume");
       } else {
-        setResume(r.resume);
+        setDraftResume(r.resume);
         setLatexOutput("");
+        setStep("edit");
       }
-      setStep("resume");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -431,63 +453,124 @@ export default function TailorApp() {
 
       {/* STEP 2: review analysis + approve project selection */}
       {step === "review" && analysis && (
-        <div className="space-y-6">
-          <div className="card space-y-3">
-            <h2 className="font-semibold">What we found in the JD</h2>
-            {(analysis.jobTitle || analysis.seniority) && (
-              <p className="text-sm text-slate-600">
-                {analysis.jobTitle && <span className="font-medium">{analysis.jobTitle}</span>}
-                {analysis.jobTitle && analysis.seniority && " · "}
-                {analysis.seniority}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-1.5">
-              {analysis.hardSkills.map((s) => (
-                <span key={s} className="chip">{s}</span>
-              ))}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column: JD Insights */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="card space-y-4 sticky top-6">
+              <div>
+                <h2 className="font-bold text-lg text-brand mb-1">JD Insights</h2>
+                <p className="text-xs text-slate-500">Key details extracted by the AI</p>
+              </div>
+
+              {(analysis.jobTitle || analysis.seniority || analysis.companyName) && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-700 space-y-1">
+                  {analysis.jobTitle && <div className="font-semibold text-base">{analysis.jobTitle}</div>}
+                  {analysis.companyName && <div className="text-slate-500">{analysis.companyName}</div>}
+                  {analysis.seniority && <div className="text-xs font-medium px-2 py-0.5 bg-slate-200 rounded inline-block mt-1">{analysis.seniority}</div>}
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Target Skills</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {analysis.hardSkills.map((s) => (
+                    <span key={s} className="chip bg-brand/10 text-brand-dark border-brand/20">{s}</span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="card space-y-4">
-            <div>
-              <h2 className="font-semibold">Projects to use for this application</h2>
-              <p className="text-sm text-slate-500">
-                Matched locally against the JD (0 tokens). Untick any you don&apos;t want in this
-                resume, then approve.
-              </p>
-            </div>
-            {matched.length === 0 && (
-              <p className="text-sm text-slate-400">
-                No projects in your profile matched — add some on the{" "}
-                <a className="text-brand underline" href="/profile">Profile page</a> for better
-                tailoring, or continue without.
-              </p>
-            )}
-            {matched.map((m) => (
-              <label
-                key={m.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50"
-                title={`matched: ${m.matched.join(", ")}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checkedIds.has(m.id)}
-                  onChange={() => toggleProject(m.id)}
-                />
-                <span className="flex-1 text-sm">{m.title}</span>
-                <span className="text-xs text-slate-400">score {m.score}</span>
-              </label>
-            ))}
-            <div className="flex flex-wrap gap-3">
-              <button className="btn-primary" disabled={!!busy} onClick={approveAndGetQuestions}>
-                Approve & get questions →
-              </button>
-              <button className="btn-ghost" disabled={!!busy} onClick={() => setStep("input")}>
-                ← Back
-              </button>
-              <button className="btn-ghost" disabled={!!busy} onClick={reset}>
-                Start over
-              </button>
+          {/* Right Column: Projects */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="card space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="font-bold text-lg">Select Projects</h2>
+                  <p className="text-sm text-slate-500">
+                    Matched against JD skills. Approve the ones to include.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn-ghost" disabled={!!busy} onClick={() => setStep("input")}>
+                    ← Back
+                  </button>
+                  <button className="btn-primary" disabled={!!busy} onClick={approveAndGetQuestions}>
+                    Approve Selection →
+                  </button>
+                </div>
+              </div>
+              
+              {matched.length === 0 && (
+                <p className="text-sm text-slate-400 p-4 border border-dashed rounded text-center">
+                  No projects in your profile matched — add some on the{" "}
+                  <a className="text-brand underline" href="/profile">Profile page</a>.
+                </p>
+              )}
+              
+              <div className="space-y-3">
+                {matched.map((m) => {
+                  const isExpanded = expandedProjectIds.has(m.id);
+                  const isChecked = checkedIds.has(m.id);
+                  // Find full project details
+                  const fullProj = projects.find(p => p.id === m.id);
+                  
+                  // Visual match indicator
+                  const matchLabel = m.score > 20 ? "🔥 High Match" : m.score > 10 ? "🟡 Med Match" : "⚪ Low Match";
+                  const matchColor = m.score > 20 ? "text-orange-600 bg-orange-50 border-orange-200" : m.score > 10 ? "text-yellow-700 bg-yellow-50 border-yellow-200" : "text-slate-500 bg-slate-50 border-slate-200";
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`border rounded-xl transition-all ${isChecked ? 'border-brand shadow-sm ring-1 ring-brand/20' : 'border-slate-200 opacity-70 hover:opacity-100'}`}
+                    >
+                      <label className="flex items-start gap-3 p-4 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="mt-1"
+                          checked={isChecked}
+                          onChange={() => toggleProject(m.id)}
+                        />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-slate-800">{m.title}</span>
+                            <span className={`text-xs px-2 py-1 rounded-md border font-medium ${matchColor}`}>
+                              {matchLabel} ({m.score})
+                            </span>
+                          </div>
+                          
+                          {m.matched.length > 0 && (
+                            <div className="flex flex-wrap gap-1 items-center">
+                              <span className="text-xs text-slate-400 mr-1">Matched:</span>
+                              {m.matched.map(skill => (
+                                <span key={skill} className="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          className="p-1 hover:bg-slate-100 rounded mt-0.5" 
+                          onClick={(e) => toggleExpandedProject(m.id, e)}
+                        >
+                          {isExpanded ? "▲" : "▼"}
+                        </button>
+                      </label>
+                      
+                      {isExpanded && fullProj && (
+                        <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-slate-50 rounded-b-xl text-sm">
+                          <p className="text-slate-600 mb-2">{fullProj.description}</p>
+                          <ul className="list-disc pl-4 space-y-1 text-slate-500 text-xs">
+                            {fullProj.bullets.map((b, i) => <li key={i}>{b}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -553,6 +636,33 @@ export default function TailorApp() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* STEP 3.5: Edit Draft */}
+      {step === "edit" && draftResume && (
+        <ResumeEditor
+          draftResume={draftResume}
+          originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
+          onSave={async (edited) => {
+            setResume(edited);
+            setStep("resume");
+            // Auto-save the first resume so the user has a baseline for future tweaks
+            if (savedResumes.length === 0) {
+              try {
+                const savedRes = await post("/api/resumes", {
+                  label: "Base Resume (Auto-saved)",
+                  resume: edited,
+                  jdSnippet: jd.slice(0, 100),
+                });
+                setSavedResumes((prev) => [savedRes.saved, ...prev]);
+                setSelectedBaseId(savedRes.saved.id);
+              } catch (autoSaveErr) {
+                console.error("Failed to auto-save initial resume", autoSaveErr);
+              }
+            }
+          }}
+          onCancel={() => setStep("questions")}
+        />
       )}
 
       {/* STEP 4: resume + email */}
