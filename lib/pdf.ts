@@ -22,13 +22,19 @@ const IS_SERVERLESS = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_
  */
 async function launchBrowser(): Promise<Browser> {
   if (IS_SERVERLESS) {
-    const chromium = (await import("@sparticuz/chromium")).default;
+    const chromium = (await import("@sparticuz/chromium-min")).default;
     const puppeteerCore = await import("puppeteer-core");
+    
+    // Disable graphics to avoid missing library issues on Amazon Linux 2023 (Vercel Node 20+)
+    chromium.setGraphicsMode = false;
+    
     return puppeteerCore.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: true,
+      executablePath: await chromium.executablePath(
+        "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar"
+      ),
+      headless: chromium.headless,
     });
   }
   const puppeteer = (await import("puppeteer")).default;
