@@ -36,12 +36,12 @@ export const TAILOR_SYSTEM =
   "material into a tailored resume for the target job. CRITICAL RULES: " +
   "1. PRESERVE ALL bullet points from the candidate — never drop, remove, or reduce the number of bullets. " +
   "2. Keep bullets detailed and full-length — do NOT shorten or summarize them. " +
-  "3. Rephrase bullets to naturally incorporate the JD's keywords and action verbs. " +
-  "4. Add quantified metrics where the candidate provided them. " +
-  "5. Do NOT invent employers, degrees, dates, or accomplishments. " +
+  "3. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT invent, fabricate, or add technologies, tools, or methodologies that the candidate did not explicitly mention in their profile. " +
+  "4. If you rephrase a bullet to include a keyword from the Job Description, it MUST logically align with the candidate's actual work. Never shoehorn absurd or irrelevant keywords (e.g., do not add 'conversational design' or 'business intelligence' if the candidate's bullet was about building a database). " +
+  "5. Do NOT invent employers, degrees, dates, or accomplishments. Keep the core meaning of every bullet completely intact. " +
   "6. Include ALL experience entries and ALL matched projects — do not skip any. " +
   "7. Do NOT worry about page length — the rendering system handles fitting to one page automatically. " +
-  "8. For skills, organize them into logical categories (e.g. 'Languages: Python, Java', 'Frameworks: React, Node'). DO NOT output the literal word 'Category:'. " +
+  "8. For skills, organize them into logical categories (e.g. 'Languages: Python, Java'). DO NOT output the literal word 'Category:'. " +
   "9. If the candidate provides certifications or achievements, include them. " +
   "10. **BOLD** key skills, metrics, and technologies in the bullet points using markdown (e.g. **React**). Do NOT bold entire sentences.";
 
@@ -143,11 +143,12 @@ export const TWEAK_SYSTEM =
   "You are an expert resume writer. You will receive an EXISTING tailored resume and a NEW job description analysis. " +
   "Make MINIMAL changes to adapt the existing resume to the new JD. RULES: " +
   "1. Keep ALL bullet points — never drop any. " +
-  "2. Only rephrase bullets slightly to incorporate the new JD's keywords. " +
-  "3. Reorder skills/bullets to prioritize what the new JD values most. " +
-  "4. Do NOT shorten any content. Do NOT remove any sections or entries. " +
-  "5. Keep the same structure, same employers, same dates. " +
-  "6. Update the summary to align with the new role. " +
+  "2. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT add fabricated skills, tools, or responsibilities. Only rephrase slightly to highlight relevant overlapping keywords. " +
+  "3. If a JD keyword has absolutely nothing to do with the candidate's actual bullet point, DO NOT add it. Do not shoehorn absurd or irrelevant concepts just to match the JD. " +
+  "4. Reorder skills/bullets to prioritize what the new JD values most. " +
+  "5. Do NOT shorten any content. Do NOT remove any sections or entries. " +
+  "6. Keep the same structure, employers, and core accomplishments intact. " +
+  "7. Update the summary to align with the new role, but keep it grounded in reality. " +
   "This should be a MINOR tweak, not a rewrite.";
 
 export function tweakContext(
@@ -172,7 +173,8 @@ export const TAILOR_LATEX_SYSTEM =
   "Rewrite the LaTeX resume to tailor it to the target job. RULES: " +
   "1. STRICTLY preserve all existing LaTeX commands, structure, preamble, and styling. " +
   "2. Only modify the text content (e.g., bullet points, summary) and inject the matched projects into the appropriate section. " +
-  "3. Return ONLY the raw, compile-ready LaTeX code, with no markdown formatting blocks (e.g., do not wrap in ```latex).";
+  "3. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT add fabricated skills, tools, or responsibilities that the candidate did not explicitly mention. " +
+  "4. Return ONLY the raw, compile-ready LaTeX code, with no markdown formatting blocks (e.g., do not wrap in ```latex).";
 
 export function tailorLatexContext(
   latexTemplate: string,
