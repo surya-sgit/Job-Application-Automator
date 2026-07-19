@@ -4,6 +4,9 @@ const nextConfig = {
   // heavy, and pdf-parse's pdfjs-dist worker relies on resolving its own file
   // path at runtime (breaks if bundled).
   serverExternalPackages: ["puppeteer", "puppeteer-core", "@sparticuz/chromium", "pdf-parse", "pdfjs-dist"],
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./node_modules/@sparticuz/chromium/bin/**/*"],
+  },
 };
 
 export default nextConfig;
