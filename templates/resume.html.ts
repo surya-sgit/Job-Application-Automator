@@ -24,6 +24,10 @@ export interface FitVars {
 }
 
 export const FIT_STEPS: FitVars[] = [
+  // Expansion 5: Huge
+  { basePx: 17, h1Px: 48, h2Px: 29, h2Pb: 11, h2Mb: 26, h3Px: 23, sectionMt: 40, articleMb: 34, liMb: 14, headerMb: 42, padding: 70 },
+  // Expansion 4: Extra Large
+  { basePx: 16.5, h1Px: 46, h2Px: 28, h2Pb: 10, h2Mb: 24, h3Px: 22, sectionMt: 37, articleMb: 31, liMb: 12, headerMb: 39, padding: 65 },
   // Expansion 3: Very Large
   { basePx: 15.5, h1Px: 44, h2Px: 27, h2Pb: 9, h2Mb: 22, h3Px: 21, sectionMt: 34, articleMb: 28, liMb: 11, headerMb: 36, padding: 60 },
   // Expansion 2: Large

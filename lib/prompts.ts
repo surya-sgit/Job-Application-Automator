@@ -43,7 +43,7 @@ export const TAILOR_SYSTEM =
   "7. Do NOT worry about page length — the rendering system handles fitting to one page automatically. " +
   "8. For skills, organize them into logical categories (e.g. 'Languages: Python, Java'). DO NOT output the literal word 'Category:'. " +
   "9. If the candidate provides certifications or achievements, include them. " +
-  "10. **BOLD** key skills, metrics, and technologies in the bullet points using markdown (e.g. **React**). Do NOT bold entire sentences.";
+  "10. **BOLD** key skills, metrics, and technologies in the EXPERIENCE and PROJECT bullet points using markdown (e.g. **React**). Do NOT bold entire sentences. STRICT RULE: Do NOT use bolding or markdown formatting anywhere in the Skills section.";
 
 /** Compact context object sent to the tailor agent (agent 3). */
 export function tailorContext(
