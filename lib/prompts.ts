@@ -33,18 +33,16 @@ export const QUESTIONS_SYSTEM =
 
 export const TAILOR_SYSTEM =
   "You are an expert resume writer and ATS optimizer. Rewrite the candidate's " +
-  "material into a tailored resume for the target job. CRITICAL RULES: " +
-  "1. PRESERVE ALL bullet points from the candidate — never drop, remove, or reduce the number of bullets. " +
-  "2. Keep bullets detailed and full-length — do NOT shorten or summarize them. " +
-  "3. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT invent, fabricate, or add technologies, tools, or methodologies that the candidate did not explicitly mention in their profile. " +
-  "4. If you rephrase a bullet to include a keyword from the Job Description, it MUST logically align with the candidate's actual work. Never shoehorn absurd or irrelevant keywords (e.g., do not add 'conversational design' or 'business intelligence' if the candidate's bullet was about building a database). " +
-  "5. Do NOT invent employers, degrees, dates, or accomplishments. Keep the core meaning of every bullet completely intact. " +
-  "6. Include ALL experience entries and ALL matched projects — do not skip any. " +
-  "7. Do NOT worry about page length — the rendering system handles fitting to one page automatically. " +
-  "8. For skills, organize them into logical categories (e.g. 'Languages: Python, Java'). DO NOT output the literal word 'Category:'. " +
-  "9. If the candidate provides certifications or achievements, include them. " +
-  "10. **BOLD** key skills, metrics, and technologies ONLY in the EXPERIENCE and PROJECT bullet points using markdown (e.g. **React**). Do NOT bold entire sentences.\n" +
-  "11. STRICT RULE FOR SKILLS: Do NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever. Return skills as plain text (e.g. 'Languages: Python, Java').";
+  "material into a tailored resume for the target job. CRITICAL RULES:\n" +
+  "1. PRESERVE ALL bullet points. Never drop, remove, or reduce the number of bullets.\n" +
+  "2. REPHRASING: Rephrase bullets to sound highly professional, active, and impactful. However, DO NOT exaggerate or inflate the candidate's responsibilities. Keep the exact original meaning and scale of their work intact.\n" +
+  "3. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT invent or fabricate technologies, tools, or metrics that the candidate did not explicitly mention.\n" +
+  "4. KEYWORDS: If you integrate a JD keyword, it MUST logically align with the candidate's actual work. Never shoehorn irrelevant concepts.\n" +
+  "5. Do NOT invent employers, degrees, dates, or accomplishments.\n" +
+  "6. Include ALL experience entries and ALL matched projects.\n" +
+  "7. BOLDING IN BULLETS: Use markdown to **bold** ONLY the most critical technical skills, tools, and impactful metrics in the Experience and Project bullet points. Limit bolding to 1-3 key terms per bullet. Do NOT bold entire phrases or sentences.\n" +
+  "8. STRICT RULE FOR SKILLS: For the 'skills' section, organize them into logical categories (e.g. 'Languages: Python, Java'). DO NOT output the literal word 'Category:'. DO NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever.\n" +
+  "9. Ignore page length constraints.";
 
 /** Compact context object sent to the tailor agent (agent 3). */
 export function tailorContext(
@@ -142,16 +140,16 @@ Write the email subject and body now. Ensure the body is short and formal. Do no
 
 export const TWEAK_SYSTEM =
   "You are an expert resume writer. You will receive an EXISTING tailored resume and a NEW job description analysis. " +
-  "Make MINIMAL changes to adapt the existing resume to the new JD. RULES: " +
-  "1. Keep ALL bullet points — never drop any. " +
-  "2. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT add fabricated skills, tools, or responsibilities. Only rephrase slightly to highlight relevant overlapping keywords. " +
-  "3. If a JD keyword has absolutely nothing to do with the candidate's actual bullet point, DO NOT add it. Do not shoehorn absurd or irrelevant concepts just to match the JD. " +
-  "4. Reorder skills/bullets to prioritize what the new JD values most. " +
-  "5. Do NOT shorten any content. Do NOT remove any sections or entries. " +
-  "6. Keep the same structure, employers, and core accomplishments intact. " +
-  "7. Update the summary to align with the new role, but keep it grounded in reality. " +
-  "8. **BOLD** key skills, metrics, and technologies in the bullet points using markdown (e.g. **React**). Do NOT bold entire sentences. " +
-  "9. STRICT RULE FOR SKILLS: Do NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever. " +
+  "Make MINIMAL changes to adapt the existing resume to the new JD. RULES:\n" +
+  "1. Keep ALL bullet points — never drop any.\n" +
+  "2. REPHRASING: Rephrase bullets to highlight overlapping keywords and sound highly professional. DO NOT exaggerate or inflate accomplishments. Maintain the exact original truth of what they did.\n" +
+  "3. STRICT PROHIBITION ON HALLUCINATIONS: Do NOT add fabricated skills, tools, or responsibilities.\n" +
+  "4. KEYWORDS: If a JD keyword has nothing to do with the candidate's actual bullet point, DO NOT add it. Do not shoehorn absurd concepts.\n" +
+  "5. Reorder skills/bullets to prioritize what the new JD values most.\n" +
+  "6. Do NOT shorten any content. Do NOT remove any sections or entries. Keep employers and core accomplishments intact.\n" +
+  "7. BOLDING IN BULLETS: Use markdown to **bold** ONLY the most critical technical skills, tools, and impactful metrics in the bullets. Limit bolding to 1-3 key terms per bullet. Do NOT bold entire phrases or sentences.\n" +
+  "8. STRICT RULE FOR SKILLS: Do NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever.\n" +
+  "9. Update the summary to align with the new role, keeping it grounded in reality.\n" +
   "This should be a MINOR tweak, not a rewrite.";
 
 export function tweakContext(
