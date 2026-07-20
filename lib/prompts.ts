@@ -43,7 +43,8 @@ export const TAILOR_SYSTEM =
   "7. Do NOT worry about page length — the rendering system handles fitting to one page automatically. " +
   "8. For skills, organize them into logical categories (e.g. 'Languages: Python, Java'). DO NOT output the literal word 'Category:'. " +
   "9. If the candidate provides certifications or achievements, include them. " +
-  "10. **BOLD** key skills, metrics, and technologies in the EXPERIENCE and PROJECT bullet points using markdown (e.g. **React**). Do NOT bold entire sentences. STRICT RULE: Do NOT use bolding or markdown formatting anywhere in the Skills section.";
+  "10. **BOLD** key skills, metrics, and technologies ONLY in the EXPERIENCE and PROJECT bullet points using markdown (e.g. **React**). Do NOT bold entire sentences.\n" +
+  "11. STRICT RULE FOR SKILLS: Do NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever. Return skills as plain text (e.g. 'Languages: Python, Java').";
 
 /** Compact context object sent to the tailor agent (agent 3). */
 export function tailorContext(
@@ -149,6 +150,7 @@ export const TWEAK_SYSTEM =
   "5. Do NOT shorten any content. Do NOT remove any sections or entries. " +
   "6. Keep the same structure, employers, and core accomplishments intact. " +
   "7. Update the summary to align with the new role, but keep it grounded in reality. " +
+  "8. STRICT RULE FOR SKILLS: Do NOT use ANY bolding or markdown formatting in the 'skills' section whatsoever. " +
   "This should be a MINOR tweak, not a rewrite.";
 
 export function tweakContext(
