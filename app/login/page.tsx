@@ -43,7 +43,7 @@ function LoginForm() {
     <div className="mx-auto mt-24 max-w-sm">
       <div className="card space-y-4">
         <div>
-          <h1 className="text-xl font-bold">🎯 Job Application Automator</h1>
+          <h1 className="text-xl font-bold">Job Application Automator</h1>
           <p className="text-sm text-slate-500">Log in to your account.</p>
         </div>
         <form onSubmit={submit} className="space-y-3">

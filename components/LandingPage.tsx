@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Target, Brain, ShieldCheck, FileText, Send, Zap } from "lucide-react";
 
 const STEPS = [
   {
@@ -22,34 +23,34 @@ const STEPS = [
 
 const FEATURES = [
   {
-    icon: "🧠",
+    icon: <Brain className="w-6 h-6 text-brand-400" />,
     title: "Bring your own AI",
     text: "Claude, GPT, Gemini, Groq, or local Ollama — your key, your choice, switchable anytime in Settings.",
   },
   {
-    icon: "🎯",
+    icon: <Target className="w-6 h-6 text-brand-400" />,
     title: "Smart project matching",
     text: "Store all your projects once. Each JD automatically pulls in only the most relevant ones — matched locally, 0 tokens.",
   },
   {
-    icon: "📄",
+    icon: <FileText className="w-6 h-6 text-brand-400" />,
     title: "One-page, ATS-friendly PDF",
     text: "Auto-fit layout with proper spacing that always lands on a single page. No overflow, ever.",
   },
   {
-    icon: "📧",
+    icon: <Send className="w-6 h-6 text-brand-400" />,
     title: "One-click Gmail send",
     text: "AI drafts the cover email, you review and confirm, and it lands in HR's inbox with your resume attached.",
   },
   {
-    icon: "🪙",
+    icon: <Zap className="w-6 h-6 text-brand-400" />,
     title: "Token-efficient by design",
     text: "A multi-step pipeline sends the AI only the relevant slice of your profile — never the whole thing.",
   },
   {
-    icon: "🔒",
-    title: "Your keys stay yours",
-    text: "API keys and Gmail credentials are encrypted at rest and only ever used for your own requests.",
+    icon: <ShieldCheck className="w-6 h-6 text-brand-400" />,
+    title: "Privacy first",
+    text: "Resumes never leave your device unless you choose a cloud provider. Your data, your rules.",
   },
 ];
 
@@ -62,8 +63,8 @@ export default function LandingPage() {
       className="space-y-24 py-12"
     >
       {/* Hero */}
-      <section className="text-center">
-        <p className="mb-4 text-5xl">🎯</p>
+      <section className="text-center flex flex-col items-center">
+        <Target className="w-16 h-16 text-brand-500 mb-6" />
         <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
           Paste a job description. Get a tailored resume. Email it — in minutes.
         </h1>

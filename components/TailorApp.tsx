@@ -270,7 +270,7 @@ export default function TailorApp() {
         body: signature ? `${body}\n\n${signature}` : body,
         resume,
       });
-      setSendResult(`✅ Sent to ${to} with your resume attached.`);
+      setSendResult(`Sent to ${to} with your resume attached.`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -291,7 +291,7 @@ export default function TailorApp() {
         jdSnippet: jd.slice(0, 100),
       });
       setSavedResumes((prev) => [r.saved, ...prev]);
-      setSaveSuccess(`✅ Saved as "${saveLabel.trim()}"`);
+      setSaveSuccess(`Saved as "${saveLabel.trim()}"`);
       setSaveLabel("");
     } catch (e) {
       setError((e as Error).message);
@@ -389,19 +389,19 @@ export default function TailorApp() {
 
         {/* Saved resumes toggle */}
         {savedResumes.length > 0 && (
-          <button
-            className="ml-auto text-xs text-brand underline"
-            onClick={() => setShowSaved(!showSaved)}
-          >
-            📂 Saved Resumes ({savedResumes.length})
-          </button>
+          <div className="flex justify-end mb-4">
+            <button
+              className="text-xs font-medium text-brand-500 hover:text-brand-400 transition-colors flex items-center gap-2"
+              onClick={() => setShowSaved(!showSaved)}
+            >
+              Saved Resumes ({savedResumes.length})
+            </button>
+          </div>
         )}
-      </div>
-
       {/* Saved resumes panel */}
       {showSaved && savedResumes.length > 0 && (
         <div className="card space-y-3">
-          <h2 className="font-semibold">📂 Saved Resumes</h2>
+          <h2 className="font-semibold">Saved Resumes</h2>
           <p className="text-sm text-slate-500">
             Load a saved version to view/download, or select one as a base for tweaking.
           </p>
@@ -821,12 +821,12 @@ export default function TailorApp() {
                     <p><span className="font-medium">Subject:</span> {subject}</p>
                     <p className="whitespace-pre-wrap border-t border-slate-200 pt-2">{body}</p>
                     <p className="text-xs text-slate-400">
-                      📎 {(resume?.name || "resume").replace(/[^a-z0-9]+/gi, "_")}_resume.pdf
+                      {(resume?.name || "resume").replace(/[^a-z0-9]+/gi, "_")}_resume.pdf
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <button className="btn-primary" disabled={!!busy} onClick={sendEmail}>
-                      📧 Confirm send
+                      Confirm send
                     </button>
                     <button
                       className="btn-ghost"
