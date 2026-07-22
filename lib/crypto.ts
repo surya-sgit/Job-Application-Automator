@@ -9,6 +9,9 @@ import crypto from "crypto";
 const ALGO = "aes-256-gcm";
 
 function getKey(): Buffer {
+  if (process.env.DATABASE_URL && !process.env.APP_SECRET) {
+    throw new Error("FATAL: APP_SECRET environment variable is missing. It is required for secure encryption in production.");
+  }
   const secret = process.env.APP_SECRET || "job-application-automator-default-dev-secret";
   return crypto.createHash("sha256").update(secret).digest();
 }

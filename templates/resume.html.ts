@@ -57,8 +57,8 @@ export const FIT_STEPS: FitVars[] = [
 function esc(s: string): string {
   return (s || "")
     .replace(/&/g, "&amp;")
-    .replace(/</, "&lt;")
-    .replace(/>/, "&gt;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>");
 }
