@@ -55,6 +55,15 @@ async function db(): Promise<Sql> {
           PRIMARY KEY (user_id, key)
         )
       `;
+      await sqlSingleton!`
+        CREATE TABLE IF NOT EXISTS rate_limits (
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          action TEXT NOT NULL,
+          count INT NOT NULL DEFAULT 1,
+          reset_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (user_id, action)
+        )
+      `;
     })();
   }
   await schemaReady;
@@ -70,11 +79,34 @@ async function kvGet(userId: string, key: string): Promise<string | null> {
 }
 
 async function kvSet(userId: string, key: string, value: string): Promise<void> {
+  const MAX_BYTES = 5 * 1024 * 1024; // 5MB limit
+  if (Buffer.byteLength(value, "utf8") > MAX_BYTES) {
+    throw new Error("Payload too large. Maximum size is 5MB.");
+  }
   const sql = await db();
   await sql`
     INSERT INTO user_data (user_id, key, value, updated_at) VALUES (${userId}, ${key}, ${value}, now())
     ON CONFLICT (user_id, key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
   `;
+}
+
+export async function checkRateLimit(userId: string, action: string, limit: number, windowMs: number): Promise<boolean> {
+  if (!USE_DB) return true; // Local dev mode has no rate limits
+  const sql = await db();
+  const resetAt = new Date(Date.now() + windowMs).toISOString();
+
+  // Clean expired bounds
+  await sql`DELETE FROM rate_limits WHERE user_id = ${userId} AND action = ${action} AND reset_at < now()`;
+
+  const rows = await sql`
+    INSERT INTO rate_limits (user_id, action, count, reset_at)
+    VALUES (${userId}, ${action}, 1, ${resetAt})
+    ON CONFLICT (user_id, action) DO UPDATE
+    SET count = rate_limits.count + 1
+    RETURNING count
+  ` as Array<{ count: number }>;
+  
+  return (rows[0]?.count ?? 1) <= limit;
 }
 
 // ---------- Users ----------

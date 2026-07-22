@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateObject, generateText } from "ai";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
-import { readProfile, readSecrets } from "@/lib/store";
+import { readProfile, readSecrets, checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import {
   JdAnalysisSchema,
@@ -48,6 +48,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const userId = await requireUserId();
+    
+    // Rate limit: 50 requests per hour
+    const allowed = await checkRateLimit(userId, "tailor", 50, 60 * 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json({ error: "Rate limit exceeded. Try again later." }, { status: 429 });
+    }
+
     const profile = await readProfile(userId);
     const secrets = await readSecrets(userId);
 

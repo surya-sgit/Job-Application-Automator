@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { randomUUID } from "crypto";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
-import { readSecrets } from "@/lib/store";
+import { readSecrets, checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { ParsedProfileSchema, ProfileSchema } from "@/lib/resumeSchema";
 import { RESUME_PARSE_SYSTEM, resumeParseUser } from "@/lib/prompts";
@@ -22,6 +22,12 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5MB
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUserId();
+    
+    // Rate limit: 20 requests per hour
+    const allowed = await checkRateLimit(userId, "parse", 20, 60 * 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json({ error: "Rate limit exceeded. Try again later." }, { status: 429 });
+    }
 
     let text = "";
     const contentType = req.headers.get("content-type") || "";

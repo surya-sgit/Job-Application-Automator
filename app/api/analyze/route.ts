@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
 import { readSecrets } from "@/lib/store";
+import { checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { JdAnalysisSchema } from "@/lib/resumeSchema";
 import { ANALYSIS_SYSTEM, analyzeUser } from "@/lib/prompts";
@@ -18,6 +19,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const userId = await requireUserId();
+    
+    // Rate limit: 30 requests per hour
+    const allowed = await checkRateLimit(userId, "analyze", 30, 60 * 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json({ error: "Rate limit exceeded. Try again later." }, { status: 429 });
+    }
+
     const secrets = await readSecrets(userId);
     const { object, usage } = await generateObject({
       model: await getModel({ cheap: true, secrets }),
