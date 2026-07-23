@@ -1,5 +1,7 @@
 # Job Application Automator
 
+**Live Demo:** [job-application-automator-git-main-surya-sgits-projects.vercel.app](https://job-application-automator-git-main-surya-sgits-projects.vercel.app/)
+
 Paste a job description → get a cleanly-formatted, JD-tailored one-page resume (PDF) → email it to HR in one click. Runs locally for free, or deploy it to Vercel (also free) to use it from your phone — with real per-user accounts.
 
 ## Features
