@@ -163,6 +163,8 @@ export const JdAnalysisSchema = z.object({
   softSkills: z.array(z.string()).default([]),
   keywords: z.array(z.string()).default([]),
   responsibilities: z.array(z.string()).default([]),
+  domain: z.string().default(""),
+  redFlags: z.array(z.string()).default([]),
   recruiterEmail: z.string().default(""),
 });
 export type JdAnalysis = z.infer<typeof JdAnalysisSchema>;

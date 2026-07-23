@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, AlertTriangle } from "lucide-react";
 import ResumePreview from "@/components/ResumePreview";
 import ResumeEditor from "@/components/ResumeEditor";
 import { fetchJson } from "@/lib/clientFetch";
@@ -496,22 +496,52 @@ export default function TailorApp() {
                 <p className="text-xs text-slate-500">Key details extracted by the AI</p>
               </div>
 
-              {(analysis.jobTitle || analysis.seniority || analysis.companyName) && (
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-700 space-y-1">
-                  {analysis.jobTitle && <div className="font-semibold text-base">{analysis.jobTitle}</div>}
-                  {analysis.companyName && <div className="text-slate-500">{analysis.companyName}</div>}
-                  {analysis.seniority && <div className="text-xs font-medium px-2 py-0.5 bg-slate-200 rounded inline-block mt-1">{analysis.seniority}</div>}
+              {(analysis.jobTitle || analysis.seniority || analysis.companyName || analysis.domain) && (
+                <div className="p-3 bg-slate-50/50 backdrop-blur-sm rounded-lg border border-white/10 text-sm text-slate-200 space-y-1 shadow-inner">
+                  {analysis.jobTitle && <div className="font-semibold text-base text-white">{analysis.jobTitle}</div>}
+                  {analysis.companyName && <div className="text-slate-400">{analysis.companyName}</div>}
+                  <div className="flex gap-2 mt-2">
+                    {analysis.seniority && <div className="text-xs font-medium px-2 py-0.5 bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded inline-block">{analysis.seniority}</div>}
+                    {analysis.domain && <div className="text-xs font-medium px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded inline-block">{analysis.domain}</div>}
+                  </div>
+                </div>
+              )}
+
+              {analysis.redFlags && analysis.redFlags.length > 0 && (
+                <div className="p-3 bg-red-900/20 rounded-lg border border-red-500/30 text-sm text-red-200 space-y-2 backdrop-blur-sm">
+                  <div className="font-semibold flex items-center gap-2 text-red-400">
+                    <AlertTriangle className="w-4 h-4" /> Red Flags Detected
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-xs opacity-90">
+                    {analysis.redFlags.map((flag, i) => (
+                      <li key={i}>{flag}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Target Skills</h3>
+                <h3 className="text-sm font-semibold text-slate-300 mb-2">Target Skills & Keywords</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {analysis.hardSkills.map((s) => (
-                    <span key={s} className="chip bg-brand/10 text-brand-dark border-brand/20">{s}</span>
+                    <span key={s} className="chip bg-brand-500/10 text-brand-300 border border-brand-500/20">{s}</span>
+                  ))}
+                  {analysis.keywords?.map((k) => (
+                    <span key={k} className="chip bg-purple-500/10 text-purple-300 border border-purple-500/20">{k}</span>
                   ))}
                 </div>
               </div>
+
+              {analysis.responsibilities && analysis.responsibilities.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Core Responsibilities</h3>
+                  <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-400">
+                    {analysis.responsibilities.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 

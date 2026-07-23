@@ -8,11 +8,11 @@ import { JdAnalysis, Profile, Project } from "./resumeSchema";
 
 export const ANALYSIS_SYSTEM =
   "You are an expert technical recruiter analyzing a job description. Extract the exact job title, company name, " +
-  "seniority level, hard skills, soft skills, key responsibilities, and key terminology/keywords. " +
-  "Also extract the recruiter's email if present.";
+  "seniority level, industry domain, hard skills, soft skills, key responsibilities, and key terminology/keywords. " +
+  "Also extract the recruiter's email if present, and any 'red flags' (e.g., toxic culture indicators like 'fast-paced', 'wear many hats').";
 
 export function analyzeUser(jd: string): string {
-  return `Job description:\n"""\n${jd.slice(0, 3000)}\n"""\n\nExtract the job title, company name, seniority, hard skills, soft skills, ATS keywords, key responsibilities, and recruiterEmail (if any).`;
+  return `Job description:\n"""\n${jd.slice(0, 3000)}\n"""\n\nExtract the job title, company name, seniority, domain, hard skills, soft skills, ATS keywords, key responsibilities, redFlags, and recruiterEmail (if any).`;
 }
 
 export const RESUME_PARSE_SYSTEM =
