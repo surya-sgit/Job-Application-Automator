@@ -3,12 +3,14 @@
 Paste a job description → get a cleanly-formatted, JD-tailored one-page resume (PDF) → email it to HR in one click. Runs locally for free, or deploy it to Vercel (also free) to use it from your phone — with real per-user accounts.
 
 ## Features
+- **Premium UI/UX:** Built with a stunning dark-mode glassmorphic aesthetic and fluid `framer-motion` animations for a sleek, modern feel.
 - **Tailor Resume** from any pasted JD, with AI clarifying questions first.
 - **Multiple projects** in your profile — the tool auto-selects the ones that match each JD (locally, **zero API tokens**).
 - **Any AI provider** — Claude, OpenAI, Gemini, Groq, or local Ollama. Pick in Settings.
 - **One-page PDF** with auto-fit spacing (never overflows).
 - **One-click Gmail send** with the resume attached + an AI-drafted email.
-- Keys/creds entered in the UI, stored **encrypted**, scoped to your account.
+- **Bank-Grade Security:** Keys/creds entered in the UI are stored using AES-256-GCM encryption, scoped strictly to your account.
+- **Abuse Prevention:** Built-in PostgreSQL rate limiting on all AI endpoints and strict payload size constraints.
 - **Real sign-up/login** (email + password) when deployed with a database — not a single shared password. Each account has its own profile, projects, and settings.
 
 ## Token-efficient pipeline
