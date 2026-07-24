@@ -7,6 +7,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/**/*": ["./node_modules/@sparticuz/chromium/bin/**/*"],
   },
+  turbopack: {}
 };
 
 export default nextConfig;

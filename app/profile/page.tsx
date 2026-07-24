@@ -142,14 +142,39 @@ export default function ProfilePage() {
 
   async function save() {
     setSaving(true);
-    setMsg("");
-    const res = await fetch("/api/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    });
+    setMsg("Checking for changes to projects...");
+    try {
+      // Lazy load embeddings client to avoid blocking initial render
+      const { getEmbedding, hashText } = await import("@/lib/embeddingsClient");
+      
+      const newProjects = [...p.projects];
+      for (let i = 0; i < newProjects.length; i++) {
+        const proj = newProjects[i];
+        const text = [proj.title, proj.role, proj.stack.join(" "), proj.description, proj.bullets.join(" ")].join(" ");
+        const currentHash = await hashText(text);
+        
+        if (proj.contentHash !== currentHash || !proj.embedding || proj.embedding.length === 0) {
+           setMsg(`Generating semantic embeddings for project ${i+1} of ${newProjects.length}... (this happens locally in your browser!)`);
+           const embedding = await getEmbedding(text);
+           newProjects[i] = { ...proj, contentHash: currentHash, embedding };
+        }
+      }
+      
+      const toSave = { ...p, projects: newProjects };
+      setP(toSave);
+      
+      setMsg("Saving profile...");
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toSave),
+      });
+      setMsg(res.ok ? "Profile saved." : "Failed to save.");
+    } catch(err) {
+      console.error(err);
+      setMsg("Failed to save: " + String(err));
+    }
     setSaving(false);
-    setMsg(res.ok ? "Profile saved." : "Failed to save.");
   }
 
   async function importResume() {

@@ -117,8 +117,13 @@ export default function TailorApp() {
         setCompany(a.analysis.companyName);
       }
 
+      setBusy("Generating semantic embeddings for JD (local)…");
+      const { getEmbedding } = await import("@/lib/embeddingsClient");
+      const jdText = [a.analysis.jobTitle, a.analysis.domain, ...(a.analysis.hardSkills || []), ...(a.analysis.keywords || []), ...(a.analysis.responsibilities || [])].join(" ");
+      const jdEmbedding = await getEmbedding(jdText);
+
       setBusy("Matching your projects (local, 0 tokens)…");
-      const m = await post("/api/match", { analysis: a.analysis, topN: 4 });
+      const m = await post("/api/match", { analysis: a.analysis, topN: 4, jdEmbedding });
       setMatched(m.selected);
       setProjects(m.projects);
       setCheckedIds(new Set(m.selected.map((s: Matched) => s.id)));
@@ -580,8 +585,14 @@ export default function TailorApp() {
                   const fullProj = projects.find(p => p.id === m.id);
                   
                   // Visual match indicator
-                  const matchLabel = m.score > 20 ? "🔥 High Match" : m.score > 10 ? "🟡 Med Match" : "⚪ Low Match";
-                  const matchColor = m.score > 20 ? "text-orange-600 bg-orange-50 border-orange-200" : m.score > 10 ? "text-yellow-700 bg-yellow-50 border-yellow-200" : "text-slate-500 bg-slate-50 border-slate-200";
+                  const isSemantic = m.score <= 100 && m.score > 0;
+                  const matchLabel = isSemantic 
+                    ? `🎯 ${m.score}% Semantic Match` 
+                    : (m.score > 20 ? "🔥 High Match" : m.score > 10 ? "🟡 Med Match" : "⚪ Low Match");
+                    
+                  const matchColor = m.score > 70 ? "text-green-700 bg-green-50 border-green-200" 
+                    : m.score > 40 ? "text-yellow-700 bg-yellow-50 border-yellow-200" 
+                    : "text-slate-500 bg-slate-50 border-slate-200";
 
                   return (
                     <div

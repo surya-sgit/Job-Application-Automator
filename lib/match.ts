@@ -56,12 +56,25 @@ export interface ScoredProject {
   matched: string[];
 }
 
-export function scoreProjects(projects: Project[], analysis: JdAnalysis): ScoredProject[] {
+export function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+export function scoreProjects(projects: Project[], analysis: JdAnalysis, jdEmbedding?: number[]): ScoredProject[] {
   // Weight hard skills + keywords more than generic responsibilities text.
   const weighted: Array<{ term: string; weight: number }> = [];
   for (const s of analysis.hardSkills) weighted.push({ term: s.toLowerCase(), weight: 3 });
-  for (const k of analysis.keywords) weighted.push({ term: k.toLowerCase(), weight: 2 });
-  for (const r of analysis.responsibilities) {
+  for (const k of (analysis.keywords || [])) weighted.push({ term: k.toLowerCase(), weight: 2 });
+  for (const r of (analysis.responsibilities || [])) {
     for (const t of normalize(r)) weighted.push({ term: t, weight: 1 });
   }
 
@@ -78,6 +91,15 @@ export function scoreProjects(projects: Project[], analysis: JdAnalysis): Scored
           matched.push(term);
         }
       }
+
+      // If semantic matching is enabled, use cosine similarity as the primary score!
+      // We scale it from -1..1 to 0..100. We still compute `matched` above to serve as the "explanation".
+      if (jdEmbedding && project.embedding && project.embedding.length > 0) {
+        const similarity = cosineSimilarity(project.embedding, jdEmbedding);
+        // Map 0..1 to 0..100 (cosine can be negative, but for text embeddings it's mostly 0..1)
+        score = Math.max(0, Math.round(similarity * 100));
+      }
+
       return { project, score, matched: [...new Set(matched)] };
     })
     .sort((a, b) => b.score - a.score);
@@ -91,10 +113,11 @@ export function scoreProjects(projects: Project[], analysis: JdAnalysis): Scored
 export function selectProjects(
   projects: Project[],
   analysis: JdAnalysis,
-  topN = 2
+  topN = 2,
+  jdEmbedding?: number[]
 ): ScoredProject[] {
   if (projects.length === 0) return [];
-  const scored = scoreProjects(projects, analysis);
+  const scored = scoreProjects(projects, analysis, jdEmbedding);
   const withScore = scored.filter((s) => s.score > 0);
   const chosen = (withScore.length > 0 ? withScore : scored).slice(0, topN);
   return chosen;

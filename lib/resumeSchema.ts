@@ -13,6 +13,8 @@ export const ProjectSchema = z.object({
   description: z.string().default(""),
   bullets: z.array(z.string()).default([]),
   link: z.string().optional().default(""),
+  contentHash: z.string().optional(),
+  embedding: z.array(z.number()).optional(),
 });
 export type Project = z.infer<typeof ProjectSchema>;
 

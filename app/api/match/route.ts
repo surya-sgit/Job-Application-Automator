@@ -19,9 +19,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid analysis payload." }, { status: 400 });
     }
     const topN = typeof body.topN === "number" ? body.topN : 4;
+    const jdEmbedding = Array.isArray(body.jdEmbedding) ? body.jdEmbedding : undefined;
 
     const profile = await readProfile(userId);
-    const selected = selectProjects(profile.projects, parsed.data, topN);
+    const selected = selectProjects(profile.projects, parsed.data, topN, jdEmbedding);
 
     console.log(
       `[match] ${profile.projects.length} projects -> selected ${selected.length} (0 tokens)`
