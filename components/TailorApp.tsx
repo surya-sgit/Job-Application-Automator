@@ -716,6 +716,7 @@ export default function TailorApp() {
       {step === "edit" && draftResume && (
         <ResumeEditor
           draftResume={draftResume}
+          jdAnalysis={analysis}
           originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
           onSave={async (edited) => {
             setResume(edited);

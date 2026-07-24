@@ -5,15 +5,18 @@ import type { TailoredResume, ParsedProfile } from "@/lib/resumeSchema";
 import TextareaAutosize from "react-textarea-autosize";
 import { Lock, Sparkles, Undo2, ChevronDown, ChevronUp, Eye, Edit2 } from "lucide-react";
 import DiffViewer from "./DiffViewer";
+import QualityReport from "./QualityReport";
+import type { JdAnalysis } from "@/lib/resumeSchema";
 
 interface Props {
   draftResume: TailoredResume;
+  jdAnalysis: JdAnalysis | null;
   originalResume: TailoredResume | ParsedProfile | null;
   onSave: (edited: TailoredResume) => void;
   onCancel: () => void;
 }
 
-export default function ResumeEditor({ draftResume, originalResume, onSave, onCancel }: Props) {
+export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, onSave, onCancel }: Props) {
   const [edited, setEdited] = useState<TailoredResume>(JSON.parse(JSON.stringify(draftResume)));
   const [viewMode, setViewMode] = useState<"diff" | "edit">("diff");
   
@@ -74,6 +77,8 @@ export default function ResumeEditor({ draftResume, originalResume, onSave, onCa
 
   return (
     <div className="space-y-8 pb-28 relative max-w-5xl mx-auto">
+      <QualityReport resume={edited} analysis={jdAnalysis} />
+      
       <div className="card space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/40">
         <div>
           <h2 className="font-bold text-2xl text-slate-900 mb-2">Review & Edit Draft</h2>
