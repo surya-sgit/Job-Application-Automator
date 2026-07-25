@@ -55,6 +55,8 @@ export default function TailorApp() {
   const [useLatex, setUseLatex] = useState(false);
   const [latexOutput, setLatexOutput] = useState("");
 
+  const [trackSuccess, setTrackSuccess] = useState("");
+
   // email panel
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
@@ -228,7 +230,27 @@ export default function TailorApp() {
       a.href = url;
       a.download = `${(resume.name || "resume").replace(/[^a-z0-9]+/gi, "_")}_resume.pdf`;
       a.click();
-      URL.revokeObjectURL(url);
+      setEmailStage("compose");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function trackApplication() {
+    setBusy("Tracking...");
+    setTrackSuccess("");
+    try {
+      await post("/api/applications", {
+        companyName: company || analysis?.companyName || "Unknown Company",
+        jobTitle: analysis?.jobTitle || "Unknown Role",
+        status: "Applied",
+        recruiterContact: to || analysis?.recruiterEmail || "",
+        resumeId: selectedBaseId || undefined,
+        jdSnippet: jd.slice(0, 500)
+      });
+      setTrackSuccess("Added to Tracker!");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -885,6 +907,20 @@ export default function TailorApp() {
               <p className="text-xs text-slate-400">
                 Sends from your Gmail (configured in Settings). The PDF is attached automatically.
               </p>
+            </div>
+            
+            {/* Tracker Promotion */}
+            <div className="card space-y-3 border-brand-200 bg-brand-50/50">
+              <h2 className="font-semibold text-brand-900">Track this Application</h2>
+              <p className="text-sm text-brand-700">
+                Keep tabs on your applications, manage interviews, and set follow-up reminders in your personal Kanban board.
+              </p>
+              <div className="flex items-center gap-3 pt-2">
+                <button className="btn-primary" disabled={!!busy || !!trackSuccess} onClick={trackApplication}>
+                  {trackSuccess ? "Added! 🎉" : "Add to Tracker"}
+                </button>
+                {trackSuccess && <a href="/tracker" className="text-sm text-brand font-medium hover:underline">View Tracker →</a>}
+              </div>
             </div>
           </div>
         </div>

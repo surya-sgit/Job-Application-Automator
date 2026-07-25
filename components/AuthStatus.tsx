@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 const APP_LINKS = [
   { href: "/", label: "Tailor" },
+  { href: "/tracker", label: "Tracker" },
   { href: "/profile", label: "Profile" },
   { href: "/settings", label: "Settings" },
 ];

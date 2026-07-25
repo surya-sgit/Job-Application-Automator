@@ -305,3 +305,51 @@ export async function deleteResume(userId: string, resumeId: string): Promise<vo
   const filtered = resumes.filter((r) => r.id !== resumeId);
   await writeResumes(userId, filtered);
 }
+
+// ---------- Applications ----------
+
+export type AppStatus = "Draft" | "Applied" | "Online Assessment" | "Interview" | "Offer" | "Rejected";
+
+export interface Application {
+  id: string;
+  companyName: string;
+  jobTitle: string;
+  status: AppStatus;
+  dateApplied: string;
+  followUpDate?: string;
+  recruiterContact?: string;
+  notes?: string;
+  resumeId?: string; // Links to the saved version of their resume
+  jdSnippet?: string;
+}
+
+export async function readApplications(userId: string): Promise<Application[]> {
+  try {
+    if (USE_DB) {
+      const raw = await kvGet(userId, "applications");
+      if (!raw) return [];
+      return JSON.parse(raw) as Application[];
+    }
+    const file = path.join(DATA_DIR, "applications.json");
+    if (!fs.existsSync(file)) return [];
+    return JSON.parse(fs.readFileSync(file, "utf8")) as Application[];
+  } catch {
+    return [];
+  }
+}
+
+export async function writeApplications(userId: string, apps: Application[]): Promise<void> {
+  if (USE_DB) {
+    await kvSet(userId, "applications", JSON.stringify(apps));
+    return;
+  }
+  ensureDir();
+  const file = path.join(DATA_DIR, "applications.json");
+  fs.writeFileSync(file, JSON.stringify(apps, null, 2), "utf8");
+}
+
+export async function deleteApplication(userId: string, appId: string): Promise<void> {
+  const apps = await readApplications(userId);
+  const filtered = apps.filter((a) => a.id !== appId);
+  await writeApplications(userId, filtered);
+}
