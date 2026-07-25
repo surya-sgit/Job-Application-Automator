@@ -1,3 +1,8 @@
+// Polyfill DOMMatrix for pdf-parse (which uses an old pdf.js) on Node 22+
+if (typeof global !== "undefined" && !(global as any).DOMMatrix) {
+  (global as any).DOMMatrix = class DOMMatrix {};
+}
+
 /**
  * Extracts plain text from an uploaded resume file so it can be handed to the
  * parsing agent. Supports PDF, DOCX, and plain text; anything else falls back
@@ -11,14 +16,11 @@ export async function extractTextFromFile(
   const ext = filename.split(".").pop()?.toLowerCase();
 
   if (ext === "pdf" || mimeType === "application/pdf") {
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
-    try {
-      const result = await parser.getText();
-      return result.text;
-    } finally {
-      await parser.destroy();
-    }
+    // @ts-ignore
+    const pdfParse: any = (await import("pdf-parse"));
+    const parser = typeof pdfParse === "function" ? pdfParse : (pdfParse.default || pdfParse);
+    const result = await parser(buffer);
+    return result.text;
   }
 
   if (ext === "docx" || mimeType?.includes("wordprocessingml")) {

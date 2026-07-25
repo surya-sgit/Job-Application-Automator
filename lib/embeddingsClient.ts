@@ -1,3 +1,8 @@
+// Polyfill process.versions for Turbopack client stub to prevent Object.keys crash in transformers.js
+if (typeof process !== "undefined" && !process.versions) {
+  (process as any).versions = {};
+}
+
 import { pipeline, env } from '@xenova/transformers';
 
 // Only load models from the Hugging Face Hub (or browser cache)
