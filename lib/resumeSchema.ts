@@ -182,3 +182,12 @@ export const EmailDraftSchema = z.object({
   body: z.string(),
 });
 export type EmailDraft = z.infer<typeof EmailDraftSchema>;
+
+export const CritiqueSchema = z.object({
+  critiques: z.array(z.object({
+    section: z.string().describe("The section of the resume (e.g. Experience, Projects)"),
+    issue: z.string().describe("A specific issue found (e.g. Passive voice, Missing metric, Repetition)"),
+    suggestedFix: z.string().describe("The suggested rewritten text"),
+  })),
+});
+export type CritiqueResult = z.infer<typeof CritiqueSchema>;

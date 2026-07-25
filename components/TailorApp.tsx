@@ -54,6 +54,7 @@ export default function TailorApp() {
   const [resume, setResume] = useState<TailoredResume | null>(null);
   const [useLatex, setUseLatex] = useState(false);
   const [latexOutput, setLatexOutput] = useState("");
+  const [deepPolish, setDeepPolish] = useState(false);
 
   const [trackSuccess, setTrackSuccess] = useState("");
 
@@ -178,15 +179,30 @@ export default function TailorApp() {
   // Step 3 → 4: generate the tailored resume from answers + approved projects.
   async function generateResume() {
     setError("");
+    let interval: NodeJS.Timeout | null = null;
     try {
       const baseResume = savedResumes.find((s) => s.id === selectedBaseId)?.resume;
       const mode = useLatex ? "latex" : baseResume ? "tweak" : "json";
 
-      setBusy(
-        baseResume
-          ? "Tweaking existing resume for new JD…"
-          : "Writing your tailored resume…"
-      );
+      if (deepPolish && !baseResume && !useLatex) {
+        const messages = [
+          "Drafting initial tailored resume...",
+          "Reviewing bullets for passive voice and weak metrics...",
+          "Polishing and finalizing text...",
+        ];
+        let i = 0;
+        setBusy(messages[0]);
+        interval = setInterval(() => {
+          i = Math.min(i + 1, messages.length - 1);
+          setBusy(messages[i]);
+        }, 3000);
+      } else {
+        setBusy(
+          baseResume
+            ? "Tweaking existing resume for new JD…"
+            : "Writing your tailored resume…"
+        );
+      }
 
       const r = await post("/api/tailor", {
         action: "generate",
@@ -194,6 +210,7 @@ export default function TailorApp() {
         analysis,
         projects: approvedProjects,
         answers,
+        deepPolish: deepPolish && !baseResume && !useLatex,
         ...(baseResume ? { baseResume } : {}),
       });
 
@@ -209,6 +226,7 @@ export default function TailorApp() {
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      if (interval) clearInterval(interval);
       setBusy("");
     }
   }
@@ -720,6 +738,22 @@ export default function TailorApp() {
             <input type="checkbox" checked={useLatex} onChange={(e) => setUseLatex(e.target.checked)} />
             Generate tailored LaTeX code instead of ATS PDF (requires LaTeX template in Profile)
           </label>
+          {(!selectedBaseId && !useLatex) && (
+            <label className="flex items-start gap-3 p-4 rounded-xl border border-brand-500/30 bg-brand-500/10 mb-4 cursor-pointer hover:bg-brand-500/20 transition-colors">
+              <input 
+                type="checkbox" 
+                className="mt-1 accent-brand-500" 
+                checked={deepPolish} 
+                onChange={(e) => setDeepPolish(e.target.checked)} 
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold text-brand-400">✨ Deep Polish (Agentic Review)</span>
+                <span className="text-xs text-brand-400/80 mt-1">
+                  Runs a 3-step AI workflow to rigorously review and rewrite weak bullets. Produces highly polished results but takes longer and consumes more API tokens.
+                </span>
+              </div>
+            </label>
+          )}
           <div className="flex flex-wrap gap-3">
             <button className="btn-primary" disabled={!!busy} onClick={generateResume}>
               {selectedBaseId ? "Tweak resume →" : "Generate tailored resume →"}

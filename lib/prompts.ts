@@ -203,3 +203,35 @@ export function tailorLatexContext(
     .filter(Boolean)
     .join("\n\n");
 }
+
+export const CRITIC_SYSTEM =
+  "You are a rigorous, elite resume reviewer. Your job is to critique the provided draft resume strictly on these 5 criteria:\n" +
+  "1. Passive Voice: Flag bullets that don't start with strong active verbs.\n" +
+  "2. Weak Bullets: Flag bullets that are too vague, lack detail, or state 'responsible for' instead of the achievement.\n" +
+  "3. Repetition: Flag if the exact same verb or phrase is overused.\n" +
+  "4. Missing Metrics: Flag bullets that describe impact but lack quantified metrics ($, %, time saved).\n" +
+  "5. Keyword Stuffing: Flag phrases that feel unnatural or shoehorned in from a job description.\n" +
+  "\n" +
+  "Return an array of specific critiques mapping exactly to the provided draft.";
+
+export function criticContext(draftResume: any): string {
+  return `DRAFT RESUME FOR CRITIQUE:\n${JSON.stringify(draftResume)}\n\nAnalyze this resume and return your critiques based strictly on the 5 criteria.`;
+}
+
+export const EDITOR_SYSTEM =
+  "You are an expert resume writer. You are given a Draft Resume and a list of Critiques. " +
+  "Rewrite the Draft Resume by fixing ONLY the specific issues mentioned in the Critiques array. " +
+  "CRITICAL RULES:\n" +
+  "1. Do NOT change the structure of the resume (employers, dates, layout).\n" +
+  "2. Do NOT remove any bullet points. You may only rewrite existing ones.\n" +
+  "3. Do NOT invent new metrics or hallucinate technologies that the candidate didn't specify. If a critique asks for metrics but none exist, rewrite the bullet to be as strong as possible without lying.\n" +
+  "4. Maintain formatting rules (e.g., bolding 1-3 key terms per bullet).\n" +
+  "5. NEVER wrap your output in markdown code blocks, just return the JSON object.";
+
+export function editorContext(draftResume: any, critiques: any): string {
+  return [
+    `DRAFT RESUME:\n${JSON.stringify(draftResume)}`,
+    `CRITIQUES TO FIX:\n${JSON.stringify(critiques)}`,
+    "Rewrite the resume to address these critiques now."
+  ].join("\n\n");
+}

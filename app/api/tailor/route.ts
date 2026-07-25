@@ -8,15 +8,20 @@ import {
   QuestionsSchema,
   TailoredResumeSchema,
   ProjectSchema,
+  CritiqueSchema,
 } from "@/lib/resumeSchema";
 import {
   QUESTIONS_SYSTEM,
   TAILOR_SYSTEM,
   TWEAK_SYSTEM,
   TAILOR_LATEX_SYSTEM,
+  CRITIC_SYSTEM,
+  EDITOR_SYSTEM,
   tailorContext,
   tweakContext,
   tailorLatexContext,
+  criticContext,
+  editorContext,
 } from "@/lib/prompts";
 import { z } from "zod";
 
@@ -37,6 +42,7 @@ const BodySchema = z.object({
   projects: z.array(ProjectSchema).default([]),
   answers: z.record(z.string()).optional(),
   baseResume: TailoredResumeSchema.optional(),
+  deepPolish: z.boolean().default(false),
 });
 
 export async function POST(req: NextRequest) {
@@ -93,14 +99,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ latex: text, usage });
     } else {
       const context = tailorContext(analysis, profile, projects, answers);
-      const { object, usage } = await generateObject({
+      const { object: draftResume, usage: draftUsage } = await generateObject({
         model: await getModel({ secrets }),
         schema: TailoredResumeSchema,
         system: TAILOR_SYSTEM,
         prompt: context,
       });
-      console.log(`[tailor:generate:json] ${describeConfig(secrets)} tokens=`, usage);
-      return NextResponse.json({ resume: object, usage });
+
+      if (!parsed.data.deepPolish) {
+        console.log(`[tailor:generate:json] ${describeConfig(secrets)} tokens=`, draftUsage);
+        return NextResponse.json({ resume: draftResume, usage: draftUsage });
+      }
+
+      console.log(`[tailor:generate:draft] completed, running critic...`);
+      const cContext = criticContext(draftResume);
+      const { object: critiqueObj, usage: criticUsage } = await generateObject({
+        model: await getModel({ cheap: true, secrets }), // use cheaper/faster model for critique if possible
+        schema: CritiqueSchema,
+        system: CRITIC_SYSTEM,
+        prompt: cContext,
+      });
+
+      console.log(`[tailor:generate:critic] found ${critiqueObj.critiques.length} issues, running editor...`);
+      const eContext = editorContext(draftResume, critiqueObj.critiques);
+      const { object: finalResume, usage: editorUsage } = await generateObject({
+        model: await getModel({ secrets }),
+        schema: TailoredResumeSchema,
+        system: EDITOR_SYSTEM,
+        prompt: eContext,
+      });
+
+      const totalUsage = {
+        promptTokens: draftUsage.promptTokens + criticUsage.promptTokens + editorUsage.promptTokens,
+        completionTokens: draftUsage.completionTokens + criticUsage.completionTokens + editorUsage.completionTokens,
+        totalTokens: draftUsage.totalTokens + criticUsage.totalTokens + editorUsage.totalTokens,
+      };
+
+      console.log(`[tailor:generate:deepPolish] ${describeConfig(secrets)} tokens=`, totalUsage);
+      return NextResponse.json({ resume: finalResume, usage: totalUsage });
     }
   } catch (err) {
     if (err instanceof UnauthorizedError) {
