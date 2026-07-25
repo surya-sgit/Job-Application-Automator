@@ -2,9 +2,6 @@
   "name": "job-application-automator",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "18.x"
-  },
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
@@ -21,6 +18,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@neondatabase/serverless": "^1.1.0",
     "@sparticuz/chromium": "^123.0.1",
+    "@sparticuz/chromium-min": "^149.0.0",
     "@xenova/transformers": "^2.17.2",
     "ai": "^3.4.0",
     "bcryptjs": "^3.0.3",
