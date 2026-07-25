@@ -17,10 +17,14 @@ export async function extractTextFromFile(
 
   if (ext === "pdf" || mimeType === "application/pdf") {
     // @ts-ignore
-    const pdfParse: any = (await import("pdf-parse"));
-    const parser = typeof pdfParse === "function" ? pdfParse : (pdfParse.default || pdfParse);
-    const result = await parser(buffer);
-    return result.text;
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const result = await parser.getText();
+      return result.text;
+    } finally {
+      await parser.destroy();
+    }
   }
 
   if (ext === "docx" || mimeType?.includes("wordprocessingml")) {
