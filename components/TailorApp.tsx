@@ -7,6 +7,7 @@ import ResumePreview from "@/components/ResumePreview";
 import ResumeEditor from "@/components/ResumeEditor";
 import { fetchJson } from "@/lib/clientFetch";
 import type { JdAnalysis, TailoredResume, Project } from "@/lib/resumeSchema";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Matched {
   id: string;
@@ -484,7 +485,9 @@ export default function TailorApp() {
       )}
 
       {busy && (
-        <div className="rounded-lg bg-brand/10 px-4 py-2 text-sm text-brand-dark">{busy}</div>
+        <div className="flex justify-center p-4">
+          <LoadingSpinner message={busy} />
+        </div>
       )}
       {error && (
         <div className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-700">{error}</div>
@@ -966,15 +969,13 @@ export default function TailorApp() {
       <AnimatePresence>
         {busy && (
           <motion.div
+            key="busy"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/80 backdrop-blur-xl"
           >
-            <div className="flex flex-col items-center gap-4 card w-72 text-center border-brand-500/30">
-              <div className="h-10 w-10 animate-spin-slow rounded-full border-2 border-brand-500 border-t-transparent shadow-[0_0_15px_rgba(79,70,229,0.5)]"></div>
-              <p className="animate-pulse font-medium text-white">{busy}</p>
-            </div>
+            <LoadingSpinner message={busy} />
           </motion.div>
         )}
       </AnimatePresence>

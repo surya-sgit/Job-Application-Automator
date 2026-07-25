@@ -33,9 +33,11 @@ const config: Config = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'mesh-dark': `
-          radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
-          radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%),
-          radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%)
+          radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+          radial-gradient(at 80% 0%, hsla(225, 39%, 25%, 0.4) 0, transparent 50%),
+          radial-gradient(at 0% 100%, hsla(339, 49%, 25%, 0.3) 0, transparent 50%),
+          radial-gradient(at 100% 100%, hsla(263, 60%, 20%, 0.3) 0, transparent 50%),
+          radial-gradient(at 50% 50%, hsla(280, 80%, 15%, 0.2) 0, transparent 50%)
         `,
       },
       fontFamily: {
@@ -46,15 +48,20 @@ const config: Config = {
         'spin-slow': 'spin 3s linear infinite',
         'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 6s ease-in-out infinite',
+        'shimmer': 'shimmer 2s linear infinite',
       },
       keyframes: {
         'pulse-glow': {
-          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-          '50%': { opacity: '.7', transform: 'scale(1.05)' },
+          '0%, 100%': { opacity: '1', transform: 'scale(1)', filter: 'brightness(1)' },
+          '50%': { opacity: '.8', transform: 'scale(1.02)', filter: 'brightness(1.2)' },
         },
         'float': {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        'shimmer': {
+          'from': { backgroundPosition: '200% 0' },
+          'to': { backgroundPosition: '-200% 0' },
         }
       }
     },
