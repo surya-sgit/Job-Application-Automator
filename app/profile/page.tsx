@@ -644,7 +644,7 @@ export default function ProfilePage() {
         />
       </div>
 
-      <div className="sticky bottom-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur">
+      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-brand-500/20 bg-dark-900/60 p-4 shadow-2xl shadow-brand-500/10 backdrop-blur-xl">
         <button className="btn-primary" onClick={save} disabled={saving}>
           {saving ? "Saving…" : "Save profile"}
         </button>

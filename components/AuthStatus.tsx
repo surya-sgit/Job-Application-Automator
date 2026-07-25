@@ -56,12 +56,12 @@ export default function AuthStatus() {
             <Link 
               key={l.href} 
               href={l.href} 
-              className={`relative px-4 py-2 rounded-lg transition-colors ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`relative px-4 py-2 rounded-lg transition-colors ${isActive ? 'text-white font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
             >
               {isActive && (
                 <motion.div
                   layoutId="active-nav-tab"
-                  className="absolute inset-0 bg-white/10 rounded-lg shadow-sm"
+                  className="absolute inset-0 bg-gradient-to-r from-brand-500/80 to-brand-600/80 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.3)]"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
