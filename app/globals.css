@@ -21,7 +21,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .btn-primary {
-    @apply btn bg-gradient-to-br from-brand-400 to-brand-500 text-dark-950 shadow-md hover:shadow-lg border border-brand-300/50;
+    @apply btn bg-gradient-to-br from-brand-400 to-brand-500 text-white shadow-md hover:shadow-lg border border-brand-300/50;
   }
   
   .btn-ghost {
