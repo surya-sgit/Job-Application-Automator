@@ -20,8 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-screen">
           <header className="sticky top-0 z-50 border-b border-white/10 bg-dark-900/60 backdrop-blur-md">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-              <Link href="/" className="flex items-center gap-3 font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-brand-600 transition hover:from-brand-300 hover:to-brand-500">
-                <Target className="w-6 h-6 text-brand-500" /> Job Application Automator
+              <Link href="/" className="flex items-center gap-3 font-display font-bold text-white transition hover:text-brand-300">
+                <Target className="w-6 h-6 text-brand-400" /> Job Application Automator
               </Link>
               <AuthStatus />
             </div>

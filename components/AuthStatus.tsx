@@ -61,7 +61,7 @@ export default function AuthStatus() {
               {isActive && (
                 <motion.div
                   layoutId="active-nav-tab"
-                  className="absolute inset-0 bg-gradient-to-r from-brand-500/80 to-brand-600/80 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+                  className="absolute inset-0 bg-white/10 rounded-lg shadow-sm border border-white/5"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
