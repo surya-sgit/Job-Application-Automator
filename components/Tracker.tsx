@@ -13,10 +13,10 @@ function DroppableColumn({ id, title, apps, onEdit, onDelete }: { id: AppStatus,
   const { setNodeRef } = useDroppable({ id });
 
   return (
-    <div className="flex flex-col bg-slate-100/50 rounded-xl border border-slate-200/60 p-3 min-h-[500px] w-72 shrink-0">
+    <div className="flex flex-col bg-white/5 rounded-xl border border-white/5 p-3 min-h-[500px] w-72 shrink-0">
       <div className="flex justify-between items-center mb-4 px-2">
-        <h3 className="font-semibold text-slate-700 text-sm">{title}</h3>
-        <span className="bg-white text-slate-500 text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">{apps.length}</span>
+        <h3 className="font-semibold text-slate-200 text-sm">{title}</h3>
+        <span className="bg-dark-800/50 text-slate-400 text-xs font-bold px-2 py-0.5 rounded-full shadow-xl">{apps.length}</span>
       </div>
       <div ref={setNodeRef} className="flex-1 space-y-3">
         {apps.map((app) => (
@@ -45,30 +45,30 @@ function DraggableCard({ app, onEdit, onDelete }: { app: Application, onEdit: ()
       style={style} 
       {...listeners} 
       {...attributes}
-      className={`bg-white p-3 rounded-lg border shadow-sm cursor-grab active:cursor-grabbing hover:border-brand/40 transition-colors group relative ${isDragging ? "opacity-50 ring-2 ring-brand" : "border-slate-200"}`}
+      className={`bg-dark-800/50 p-3 rounded-lg border shadow-xl cursor-grab active:cursor-grabbing hover:border-brand/40 transition-colors group relative ${isDragging ? "opacity-50 ring-2 ring-brand" : "border-white/10"}`}
     >
       <div className="flex justify-between items-start mb-1">
-        <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{app.companyName}</h4>
+        <h4 className="font-bold text-slate-100 text-sm line-clamp-1">{app.companyName}</h4>
       </div>
-      <p className="text-xs text-slate-500 line-clamp-1 mb-3">{app.jobTitle}</p>
+      <p className="text-xs text-slate-400 line-clamp-1 mb-3">{app.jobTitle}</p>
       
-      <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
+      <div className="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
         <span className="text-[10px] text-slate-400 flex items-center gap-1">
           <Clock className="w-3 h-3" /> {new Date(app.dateApplied).toLocaleDateString()}
         </span>
         
         {isStale && (
-          <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded flex items-center gap-1">
+          <span className="text-[10px] text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
             <AlertCircle className="w-3 h-3" /> Stale
           </span>
         )}
       </div>
 
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-         <button className="p-1 bg-white hover:bg-slate-100 text-slate-400 hover:text-brand rounded shadow-sm border border-slate-200" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+         <button className="p-1 bg-dark-800/50 hover:bg-white/10 text-slate-400 hover:text-brand rounded shadow-xl border border-white/10" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
            <FileText className="w-3 h-3" />
          </button>
-         <button className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded shadow-sm border border-slate-200" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+         <button className="p-1 bg-dark-800/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded shadow-xl border border-white/10" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
            <Trash2 className="w-3 h-3" />
          </button>
       </div>
@@ -158,7 +158,7 @@ export default function Tracker() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Loading tracker...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-400">Loading tracker...</div>;
 
   const total = apps.length;
   const interviews = apps.filter(a => a.status === "Interview" || a.status === "Offer").length;
@@ -171,28 +171,28 @@ export default function Tracker() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card flex items-center justify-between !p-5">
           <div>
-            <p className="text-sm text-slate-500 font-medium">Total Applications</p>
-            <p className="text-3xl font-bold text-slate-800">{total}</p>
+            <p className="text-sm text-slate-400 font-medium">Total Applications</p>
+            <p className="text-3xl font-bold text-slate-100">{total}</p>
           </div>
-          <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center">
             <Building2 className="w-6 h-6" />
           </div>
         </div>
         <div className="card flex items-center justify-between !p-5">
           <div>
-            <p className="text-sm text-slate-500 font-medium">Interview Rate</p>
+            <p className="text-sm text-slate-400 font-medium">Interview Rate</p>
             <p className="text-3xl font-bold text-emerald-600">{interviewRate}%</p>
           </div>
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
             <Activity className="w-6 h-6" />
           </div>
         </div>
         <div className="card flex items-center justify-between !p-5">
           <div>
-            <p className="text-sm text-slate-500 font-medium">Active Processes</p>
-            <p className="text-3xl font-bold text-amber-600">{active}</p>
+            <p className="text-sm text-slate-400 font-medium">Active Processes</p>
+            <p className="text-3xl font-bold text-amber-400">{active}</p>
           </div>
-          <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center">
             <Briefcase className="w-6 h-6" />
           </div>
         </div>
@@ -214,9 +214,9 @@ export default function Tracker() {
         </div>
         <DragOverlay>
           {activeApp ? (
-            <div className="bg-white p-3 rounded-lg border border-brand shadow-xl opacity-90 w-72 rotate-2">
-              <h4 className="font-bold text-slate-800 text-sm">{activeApp.companyName}</h4>
-              <p className="text-xs text-slate-500">{activeApp.jobTitle}</p>
+            <div className="bg-dark-800/50 p-3 rounded-lg border border-brand shadow-xl opacity-90 w-72 rotate-2">
+              <h4 className="font-bold text-slate-100 text-sm">{activeApp.companyName}</h4>
+              <p className="text-xs text-slate-400">{activeApp.jobTitle}</p>
             </div>
           ) : null}
         </DragOverlay>
@@ -225,19 +225,19 @@ export default function Tracker() {
       {/* Edit Modal */}
       {editingApp && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+          <div className="bg-dark-800/50 rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold">{editingApp.companyName}</h2>
-                <p className="text-slate-500">{editingApp.jobTitle}</p>
+                <p className="text-slate-400">{editingApp.jobTitle}</p>
               </div>
-              <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold">{editingApp.status}</span>
+              <span className="px-2 py-1 bg-white/10 text-slate-300 rounded text-xs font-semibold">{editingApp.status}</span>
             </div>
             
             <div className="space-y-3">
               <div>
                 <label className="label">Recruiter Contact</label>
-                <div className="text-sm bg-slate-50 p-2 rounded border text-slate-700 font-mono">
+                <div className="text-sm bg-white/5 p-2 rounded border text-slate-200 font-mono">
                   {editingApp.recruiterContact || "None"}
                 </div>
               </div>
@@ -263,7 +263,7 @@ export default function Tracker() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
               <button className="btn-ghost" onClick={() => setEditingApp(null)}>Cancel</button>
               <button className="btn-primary" onClick={() => handleSaveEdit(editingApp)}>Save Changes</button>
             </div>

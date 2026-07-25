@@ -370,7 +370,7 @@ export default function TailorApp() {
       {/* Animated Step Indicator */}
       <div className="card mb-8 p-4">
         <div className="flex flex-wrap items-center justify-between gap-4 text-sm relative">
-          <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-white/5"></div>
+          <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-dark-800/50/5"></div>
           {STEPS.map((s, i) => {
             const isActive = step === s.key;
             const isPast = STEPS.findIndex(x => x.key === step) > i;
@@ -390,7 +390,7 @@ export default function TailorApp() {
                 >
                   {isPast ? <Check size={14} className="text-white" /> : i + 1}
                 </motion.div>
-                <span className={`text-xs font-medium transition-colors ${isActive ? "text-white" : "text-slate-500"}`}>
+                <span className={`text-xs font-medium transition-colors ${isActive ? "text-white" : "text-slate-400"}`}>
                   {s.label}
                 </span>
               </div>
@@ -409,7 +409,7 @@ export default function TailorApp() {
           className="w-full"
         >
           {error && (
-            <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 backdrop-blur-md flex items-center gap-3">
+            <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/200/10 px-4 py-3 text-sm text-red-400 backdrop-blur-md flex items-center gap-3">
               <span className="text-xl">⚠️</span> {error}
             </div>
           )}
@@ -429,13 +429,13 @@ export default function TailorApp() {
       {showSaved && savedResumes.length > 0 && (
         <div className="card space-y-3">
           <h2 className="font-semibold">Saved Resumes</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             Load a saved version to view/download, or select one as a base for tweaking.
           </p>
           {savedResumes.map((s) => (
             <div
               key={s.id}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2"
             >
               <div className="flex-1">
                 <span className="font-medium text-sm">{s.label}</span>
@@ -455,7 +455,7 @@ export default function TailorApp() {
                 Load
               </button>
               <button
-                className="text-xs text-red-500 underline"
+                className="text-xs text-red-400 underline"
                 onClick={() => deleteSavedResume(s.id)}
               >
                 Delete
@@ -469,7 +469,7 @@ export default function TailorApp() {
         <div className="rounded-lg bg-brand/10 px-4 py-2 text-sm text-brand-dark">{busy}</div>
       )}
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-700">{error}</div>
       )}
 
       {/* STEP 1: JD input */}
@@ -477,7 +477,7 @@ export default function TailorApp() {
         <div className="card space-y-4">
           <h1 className="text-xl font-bold">Paste a job description</h1>
           {profileEmpty && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
               Your profile is empty — add your projects and experience on the{" "}
               <a className="font-medium underline" href="/profile">Profile page</a>{" "}
               first so the resume has something to tailor.
@@ -520,16 +520,16 @@ export default function TailorApp() {
             <div className="card space-y-4 sticky top-6">
               <div>
                 <h2 className="font-bold text-lg text-brand mb-1">JD Insights</h2>
-                <p className="text-xs text-slate-500">Key details extracted by the AI</p>
+                <p className="text-xs text-slate-400">Key details extracted by the AI</p>
               </div>
 
               {(analysis.jobTitle || analysis.seniority || analysis.companyName || analysis.domain) && (
-                <div className="p-3 bg-slate-50/50 backdrop-blur-sm rounded-lg border border-white/10 text-sm text-slate-200 space-y-1 shadow-inner">
+                <div className="p-3 bg-white/5/50 backdrop-blur-sm rounded-lg border border-white/10 text-sm text-slate-200 space-y-1 shadow-inner">
                   {analysis.jobTitle && <div className="font-semibold text-base text-white">{analysis.jobTitle}</div>}
                   {analysis.companyName && <div className="text-slate-400">{analysis.companyName}</div>}
                   <div className="flex gap-2 mt-2">
                     {analysis.seniority && <div className="text-xs font-medium px-2 py-0.5 bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded inline-block">{analysis.seniority}</div>}
-                    {analysis.domain && <div className="text-xs font-medium px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded inline-block">{analysis.domain}</div>}
+                    {analysis.domain && <div className="text-xs font-medium px-2 py-0.5 bg-brand-500/200/20 text-blue-300 border border-blue-500/30 rounded inline-block">{analysis.domain}</div>}
                   </div>
                 </div>
               )}
@@ -578,7 +578,7 @@ export default function TailorApp() {
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="font-bold text-lg">Select Projects</h2>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-400">
                     Matched against JD skills. Approve the ones to include.
                   </p>
                 </div>
@@ -614,12 +614,12 @@ export default function TailorApp() {
                     
                   const matchColor = m.score > 70 ? "text-green-700 bg-green-50 border-green-200" 
                     : m.score > 40 ? "text-yellow-700 bg-yellow-50 border-yellow-200" 
-                    : "text-slate-500 bg-slate-50 border-slate-200";
+                    : "text-slate-400 bg-white/5 border-white/10";
 
                   return (
                     <div
                       key={m.id}
-                      className={`border rounded-xl transition-all ${isChecked ? 'border-brand shadow-sm ring-1 ring-brand/20' : 'border-slate-200 opacity-70 hover:opacity-100'}`}
+                      className={`border rounded-xl transition-all ${isChecked ? 'border-brand shadow-xl ring-1 ring-brand/20' : 'border-white/10 opacity-70 hover:opacity-100'}`}
                     >
                       <label className="flex items-start gap-3 p-4 cursor-pointer">
                         <input
@@ -630,7 +630,7 @@ export default function TailorApp() {
                         />
                         <div className="flex-1 space-y-2">
                           <div className="flex justify-between items-center">
-                            <span className="font-semibold text-slate-800">{m.title}</span>
+                            <span className="font-semibold text-slate-100">{m.title}</span>
                             <span className={`text-xs px-2 py-1 rounded-md border font-medium ${matchColor}`}>
                               {matchLabel} ({m.score})
                             </span>
@@ -648,7 +648,7 @@ export default function TailorApp() {
                           )}
                         </div>
                         <button 
-                          className="p-1 hover:bg-slate-100 rounded mt-0.5" 
+                          className="p-1 hover:bg-white/10 rounded mt-0.5" 
                           onClick={(e) => toggleExpandedProject(m.id, e)}
                         >
                           {isExpanded ? "▲" : "▼"}
@@ -656,9 +656,9 @@ export default function TailorApp() {
                       </label>
                       
                       {isExpanded && fullProj && (
-                        <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-slate-50 rounded-b-xl text-sm">
-                          <p className="text-slate-600 mb-2">{fullProj.description}</p>
-                          <ul className="list-disc pl-4 space-y-1 text-slate-500 text-xs">
+                        <div className="px-4 pb-4 pt-2 border-t border-white/5 bg-white/5 rounded-b-xl text-sm">
+                          <p className="text-slate-300 mb-2">{fullProj.description}</p>
+                          <ul className="list-disc pl-4 space-y-1 text-slate-400 text-xs">
                             {fullProj.bullets.map((b, i) => <li key={i}>{b}</li>)}
                           </ul>
                         </div>
@@ -676,7 +676,7 @@ export default function TailorApp() {
       {step === "questions" && (
         <div className="card space-y-4">
           <h2 className="font-semibold">A few quick questions</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             Answer what you can — blanks are fine. These sharpen the tailoring.
           </p>
           {questions.map((q) => (
@@ -692,8 +692,8 @@ export default function TailorApp() {
 
           {/* Tweak from existing resume */}
           {savedResumes.length > 0 && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+            <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 space-y-2">
+              <label className="text-sm font-medium text-slate-200">
                 🔄 Start from an existing resume (optional — saves tokens)
               </label>
               <select
@@ -709,14 +709,14 @@ export default function TailorApp() {
                 ))}
               </select>
               {selectedBaseId && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-400">
                   The AI will make minor keyword tweaks to this resume instead of regenerating from scratch.
                 </p>
               )}
             </div>
           )}
 
-          <label className="flex items-center gap-2 text-sm text-slate-600 mt-4 mb-2">
+          <label className="flex items-center gap-2 text-sm text-slate-300 mt-4 mb-2">
             <input type="checkbox" checked={useLatex} onChange={(e) => setUseLatex(e.target.checked)} />
             Generate tailored LaTeX code instead of ATS PDF (requires LaTeX template in Profile)
           </label>
@@ -782,7 +782,7 @@ export default function TailorApp() {
                 </button>
               </div>
             </div>
-            <div className="max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-slate-100 p-4">
+            <div className="max-h-[80vh] overflow-auto rounded-xl border border-white/10 bg-white/10 p-4">
               {latexOutput ? (
                 <textarea
                   className="input min-h-[500px] w-full font-mono text-xs whitespace-pre"
@@ -820,7 +820,7 @@ export default function TailorApp() {
               <h2 className="font-semibold">Email to HR</h2>
 
               {latexOutput && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
                   Emailing via the app is only supported for ATS PDF resumes. You can copy your LaTeX code above and compile/send it yourself!
                 </div>
               )}
@@ -876,14 +876,14 @@ export default function TailorApp() {
 
               {!latexOutput && emailStage === "confirm" && (
                 <>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-400">
                     Double-check before sending — this goes straight to HR with your resume PDF
                     attached.
                   </p>
-                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
                     <p><span className="font-medium">To:</span> {to}</p>
                     <p><span className="font-medium">Subject:</span> {subject}</p>
-                    <p className="whitespace-pre-wrap border-t border-slate-200 pt-2">{body}</p>
+                    <p className="whitespace-pre-wrap border-t border-white/10 pt-2">{body}</p>
                     <p className="text-xs text-slate-400">
                       {(resume?.name || "resume").replace(/[^a-z0-9]+/gi, "_")}_resume.pdf
                     </p>
