@@ -1,13 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep external so Next doesn't try to bundle them: puppeteer/chromium are
-  // heavy, and pdf-parse's pdfjs-dist worker relies on resolving its own file
-  // path at runtime (breaks if bundled).
+  // Keep external so Next doesn't try to bundle them
   serverExternalPackages: ["puppeteer", "puppeteer-core", "@sparticuz/chromium", "pdf-parse", "pdfjs-dist"],
   outputFileTracingIncludes: {
     "/api/**/*": ["./node_modules/@sparticuz/chromium/bin/**/*"],
   },
-  turbopack: {}
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+        path: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
