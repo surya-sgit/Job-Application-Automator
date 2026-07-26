@@ -111,32 +111,42 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ resume: draftResume, usage: draftUsage });
       }
 
-      console.log(`[tailor:generate:draft] completed, running critic...`);
-      const cContext = criticContext(draftResume);
-      const { object: critiqueObj, usage: criticUsage } = await generateObject({
-        model: await getModel({ cheap: true, secrets }), // use cheaper/faster model for critique if possible
-        schema: CritiqueSchema,
-        system: CRITIC_SYSTEM,
-        prompt: cContext,
-      });
+      try {
+        console.log(`[tailor:generate:draft] completed, running critic...`);
+        const cContext = criticContext(draftResume);
+        const { object: critiqueObj, usage: criticUsage } = await generateObject({
+          model: await getModel({ cheap: true, secrets }), // use cheaper/faster model for critique if possible
+          schema: CritiqueSchema,
+          system: CRITIC_SYSTEM,
+          prompt: cContext,
+        });
 
-      console.log(`[tailor:generate:critic] found ${critiqueObj.critiques.length} issues, running editor...`);
-      const eContext = editorContext(draftResume, critiqueObj.critiques);
-      const { object: finalResume, usage: editorUsage } = await generateObject({
-        model: await getModel({ secrets }),
-        schema: TailoredResumeSchema,
-        system: EDITOR_SYSTEM,
-        prompt: eContext,
-      });
+        console.log(`[tailor:generate:critic] found ${critiqueObj.critiques.length} issues, running editor...`);
+        const eContext = editorContext(draftResume, critiqueObj.critiques);
+        const { object: finalResume, usage: editorUsage } = await generateObject({
+          model: await getModel({ secrets }),
+          schema: TailoredResumeSchema,
+          system: EDITOR_SYSTEM,
+          prompt: eContext,
+        });
 
-      const totalUsage = {
-        promptTokens: draftUsage.promptTokens + criticUsage.promptTokens + editorUsage.promptTokens,
-        completionTokens: draftUsage.completionTokens + criticUsage.completionTokens + editorUsage.completionTokens,
-        totalTokens: draftUsage.totalTokens + criticUsage.totalTokens + editorUsage.totalTokens,
-      };
+        const totalUsage = {
+          promptTokens: draftUsage.promptTokens + criticUsage.promptTokens + editorUsage.promptTokens,
+          completionTokens: draftUsage.completionTokens + criticUsage.completionTokens + editorUsage.completionTokens,
+          totalTokens: draftUsage.totalTokens + criticUsage.totalTokens + editorUsage.totalTokens,
+        };
 
-      console.log(`[tailor:generate:deepPolish] ${describeConfig(secrets)} tokens=`, totalUsage);
-      return NextResponse.json({ resume: finalResume, usage: totalUsage });
+        console.log(`[tailor:generate:deepPolish] ${describeConfig(secrets)} tokens=`, totalUsage);
+        return NextResponse.json({ resume: finalResume, usage: totalUsage });
+      } catch (polishError) {
+        console.error("[tailor:generate:deepPolish] Deep polish failed, falling back to draft:", polishError);
+        return NextResponse.json({ 
+          resume: draftResume, 
+          usage: draftUsage,
+          fallback: true,
+          fallbackReason: "Deep Polish timed out or encountered an error. Falling back to the standard tailored draft."
+        });
+      }
     }
   } catch (err) {
     if (err instanceof UnauthorizedError) {

@@ -73,6 +73,7 @@ export default function TailorApp() {
   const [saveSuccess, setSaveSuccess] = useState("");
   const [selectedBaseId, setSelectedBaseId] = useState<string>("");
   const [showSaved, setShowSaved] = useState(false);
+  const [fallbackMsg, setFallbackMsg] = useState("");
 
   // Best-effort empty-profile guard — never blocks the flow.
   useEffect(() => {
@@ -180,6 +181,7 @@ export default function TailorApp() {
   // Step 3 → 4: generate the tailored resume from answers + approved projects.
   async function generateResume() {
     setError("");
+    setFallbackMsg("");
     let interval: NodeJS.Timeout | null = null;
     try {
       const baseResume = savedResumes.find((s) => s.id === selectedBaseId)?.resume;
@@ -222,9 +224,13 @@ export default function TailorApp() {
       } else {
         setDraftResume(r.resume);
         setLatexOutput("");
+        if (r.fallback) {
+          setFallbackMsg(r.fallbackReason || "Deep Polish failed. Showing standard tailored draft.");
+        }
         setStep("edit");
       }
     } catch (e) {
+      // Outer catch: Keeps user on "questions" step so they don't lose data
       setError((e as Error).message);
     } finally {
       if (interval) clearInterval(interval);
@@ -773,8 +779,15 @@ export default function TailorApp() {
 
       {/* STEP 3.5: Edit Draft */}
       {step === "edit" && draftResume && (
-        <ResumeEditor
-          draftResume={draftResume}
+        <div className="space-y-4">
+          {fallbackMsg && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 shadow-lg shadow-amber-500/5">
+              <h3 className="font-semibold text-amber-500 text-sm">Deep Polish Fallback</h3>
+              <p className="text-amber-200/80 text-xs mt-1">{fallbackMsg}</p>
+            </div>
+          )}
+          <ResumeEditor
+            draftResume={draftResume}
           jdAnalysis={analysis}
           originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
           onSave={async (edited) => {
@@ -797,6 +810,7 @@ export default function TailorApp() {
           }}
           onCancel={() => setStep("questions")}
         />
+        </div>
       )}
 
       {/* STEP 4: resume + email */}
