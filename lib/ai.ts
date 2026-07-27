@@ -85,9 +85,13 @@ export async function safeGenerateObject<T>(opts: {
     }
     cleanText = cleanText.trim();
 
-    // Fallback: strictly extract the first complete JSON object using brace depth tracking
-    const firstBrace = cleanText.indexOf('{');
-    if (firstBrace !== -1) {
+    let parsed: any = null;
+    let searchStartIndex = 0;
+
+    while (parsed === null && searchStartIndex < cleanText.length) {
+      const firstBrace = cleanText.indexOf('{', searchStartIndex);
+      if (firstBrace === -1) break;
+
       let depth = 0;
       let lastBrace = -1;
       let inString = false;
@@ -119,11 +123,25 @@ export async function safeGenerateObject<T>(opts: {
       }
       
       if (lastBrace !== -1) {
-        cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+        const candidate = cleanText.substring(firstBrace, lastBrace + 1);
+        try {
+          parsed = JSON.parse(candidate);
+          break; // Successfully found and parsed a valid JSON object!
+        } catch (e) {
+          // Candidate was not valid JSON (e.g. a Typescript interface with unquoted types like "jobTitle": string)
+          // Start searching for the next '{' after the current firstBrace
+          searchStartIndex = firstBrace + 1;
+        }
+      } else {
+        // No closing brace found for this block, stop searching
+        break;
       }
     }
 
-    const parsed = JSON.parse(cleanText);
+    if (!parsed) {
+      throw new Error("No valid JSON object found in the response.");
+    }
+
     const object = opts.schema.parse(parsed);
     return { object, usage };
   } catch (e: any) {
