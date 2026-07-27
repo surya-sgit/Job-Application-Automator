@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateObject } from "ai";
+import { getModel, MissingKeyError, describeConfig, safeGenerateObject } from "@/lib/ai";
 import { randomUUID } from "crypto";
-import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
 import { readSecrets, checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { ParsedProfileSchema, ProfileSchema } from "@/lib/resumeSchema";
@@ -58,8 +57,8 @@ export async function POST(req: NextRequest) {
     }
 
     const secrets = await readSecrets(userId);
-    const { object, usage } = await generateObject({
-      model: await getModel({ cheap: true, secrets }),
+    const { object, usage } = await safeGenerateObject({
+      model: await getModel({ cheap: false, secrets }),
       schema: ParsedProfileSchema,
       system: RESUME_PARSE_SYSTEM,
       prompt: resumeParseUser(text),
@@ -68,9 +67,9 @@ export async function POST(req: NextRequest) {
 
     const profile = ProfileSchema.parse({
       ...object,
-      projects: object.projects.map((p) => ({ ...p, id: randomUUID() })),
-      experience: object.experience.map((e) => ({ ...e, id: randomUUID() })),
-      education: object.education.map((e) => ({ ...e, id: randomUUID() })),
+      projects: (object.projects ?? []).map((p) => ({ ...p, id: randomUUID() })),
+      experience: (object.experience ?? []).map((e) => ({ ...e, id: randomUUID() })),
+      education: (object.education ?? []).map((e) => ({ ...e, id: randomUUID() })),
     });
 
     return NextResponse.json({ profile, usage });

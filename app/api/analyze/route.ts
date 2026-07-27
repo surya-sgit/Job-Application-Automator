@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateObject } from "ai";
-import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
+import { getModel, MissingKeyError, describeConfig, safeGenerateObject } from "@/lib/ai";
 import { readSecrets } from "@/lib/store";
 import { checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const secrets = await readSecrets(userId);
-    const { object, usage } = await generateObject({
+    const { object, usage } = await safeGenerateObject({
       model: await getModel({ cheap: true, secrets }),
       schema: JdAnalysisSchema,
       system: ANALYSIS_SYSTEM,

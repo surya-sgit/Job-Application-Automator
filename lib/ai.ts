@@ -2,7 +2,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
-import type { LanguageModel } from "ai";
+import { generateText, type LanguageModel } from "ai";
+import { z } from "zod";
 import { Secrets } from "./store";
 
 /**
@@ -47,4 +48,43 @@ export async function getModel(opts: { cheap?: boolean; secrets: Secrets }): Pro
 /** Human-readable current config for logging (no secrets). */
 export function describeConfig(s: Secrets) {
   return `provider=${s.provider} model=${s.model} cheapModel=${s.cheapModel}`;
+}
+
+/**
+ * Bypasses provider JSON validation bugs (like Groq + Qwen) by using generateText
+ * and manually cleaning/parsing the JSON output.
+ */
+export async function safeGenerateObject<T>(opts: {
+  model: LanguageModel;
+  schema: z.ZodSchema<T>;
+  system: string;
+  prompt: string;
+  temperature?: number;
+}): Promise<{ object: T; usage: any }> {
+  const { text, usage } = await generateText({
+    model: opts.model,
+    temperature: opts.temperature ?? 0,
+    system: opts.system + "\n\nCRITICAL INSTRUCTION: You MUST output strictly valid JSON matching the requested schema. Do NOT wrap in markdown code blocks like ```json. Do NOT include conversational text. Return ONLY the raw JSON object.",
+    prompt: opts.prompt,
+  });
+
+  try {
+    let cleanText = text.trim();
+    if (cleanText.startsWith("\`\`\`json")) {
+      cleanText = cleanText.substring(7);
+    } else if (cleanText.startsWith("\`\`\`")) {
+      cleanText = cleanText.substring(3);
+    }
+    if (cleanText.endsWith("\`\`\`")) {
+      cleanText = cleanText.substring(0, cleanText.length - 3);
+    }
+    cleanText = cleanText.trim();
+
+    const parsed = JSON.parse(cleanText);
+    const object = opts.schema.parse(parsed);
+    return { object, usage };
+  } catch (e: any) {
+    console.error("[safeGenerateObject] parse error:", e, "\nRaw text:", text);
+    throw new Error(`Failed to parse AI output as JSON: ${e.message}`);
+  }
 }

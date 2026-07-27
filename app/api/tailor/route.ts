@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateObject, generateText } from "ai";
-import { getModel, MissingKeyError, describeConfig } from "@/lib/ai";
+import { generateText } from "ai";
+import { getModel, MissingKeyError, describeConfig, safeGenerateObject } from "@/lib/ai";
 import { readProfile, readSecrets, checkRateLimit } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import {
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "questions") {
       const context = tailorContext(analysis, profile, projects, answers);
-      const { object, usage } = await generateObject({
+      const { object, usage } = await safeGenerateObject({
         model: await getModel({ cheap: true, secrets }),
         schema: QuestionsSchema,
         system: QUESTIONS_SYSTEM,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     if (parsed.data.mode === "tweak" && parsed.data.baseResume) {
       // Tweak mode: minor edits to an existing resume
       const context = tweakContext(analysis, parsed.data.baseResume, answers);
-      const { object, usage } = await generateObject({
+      const { object, usage } = await safeGenerateObject({
         model: await getModel({ secrets }),
         schema: TailoredResumeSchema,
         system: TWEAK_SYSTEM,
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ latex: text, usage });
     } else {
       const context = tailorContext(analysis, profile, projects, answers);
-      const { object: draftResume, usage: draftUsage } = await generateObject({
+      const { object: draftResume, usage: draftUsage } = await safeGenerateObject({
         model: await getModel({ secrets }),
         schema: TailoredResumeSchema,
         system: TAILOR_SYSTEM,
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       try {
         console.log(`[tailor:generate:draft] completed, running critic...`);
         const cContext = criticContext(draftResume);
-        const { object: critiqueObj, usage: criticUsage } = await generateObject({
+        const { object: critiqueObj, usage: criticUsage } = await safeGenerateObject({
           model: await getModel({ cheap: true, secrets }), // use cheaper/faster model for critique if possible
           schema: CritiqueSchema,
           system: CRITIC_SYSTEM,
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
 
         console.log(`[tailor:generate:critic] found ${critiqueObj.critiques.length} issues, running editor...`);
         const eContext = editorContext(draftResume, critiqueObj.critiques);
-        const { object: finalResume, usage: editorUsage } = await generateObject({
+        const { object: finalResume, usage: editorUsage } = await safeGenerateObject({
           model: await getModel({ secrets }),
           schema: TailoredResumeSchema,
           system: EDITOR_SYSTEM,
