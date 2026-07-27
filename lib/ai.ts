@@ -60,10 +60,12 @@ export async function safeGenerateObject<T>(opts: {
   system: string;
   prompt: string;
   temperature?: number;
+  maxTokens?: number;
 }): Promise<{ object: T; usage: any }> {
   const { text, usage } = await generateText({
     model: opts.model,
     temperature: opts.temperature ?? 0,
+    maxTokens: opts.maxTokens ?? 8000,
     system: opts.system + "\n\nCRITICAL INSTRUCTION: You MUST output strictly valid JSON matching the requested schema. Do NOT wrap in markdown code blocks like ```json. Do NOT include conversational text. Return ONLY the raw JSON object.",
     prompt: opts.prompt,
   });

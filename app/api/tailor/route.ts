@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
         model: await getModel({ secrets }),
         system: TAILOR_LATEX_SYSTEM,
         prompt: context,
+        maxTokens: 8000,
       });
       console.log(`[tailor:generate:latex] ${describeConfig(secrets)} tokens=`, usage);
       return NextResponse.json({ latex: text, usage });
