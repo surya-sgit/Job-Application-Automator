@@ -118,10 +118,7 @@ export const TailoredResumeSchema = z.object({
     links: z.array(z.string()).default([]),
   }),
   summary: z.string(),
-  skills: z
-    .array(z.string())
-    .describe("A list of categorized skills. Each string MUST be in the format '**Category Name:** skill1, skill2'")
-    .default([]),
+  skills: z.array(z.string()).default([]),
   certifications: z.array(z.string()).default([]),
   achievements: z.array(z.string()).default([]),
   experience: z
