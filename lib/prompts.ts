@@ -55,7 +55,7 @@ Rewrite the candidate's material into a tailored resume optimized for the target
 - STRUCTURE: Preserve ALL bullet points. Never drop, remove, or reduce the number of bullets. Include ALL experience entries and ALL matched projects.
 - REPHRASING: Rephrase bullets to be active and impactful, integrating JD keywords ONLY if they logically align with the candidate's actual work.
 - HALLUCINATIONS: STRICT PROHIBITION. Do NOT invent or fabricate technologies, tools, metrics, employers, degrees, dates, or accomplishments.
-- BOLDING: Use markdown to **bold** ONLY 1-3 critical technical skills or metrics per bullet. Do NOT bold entire phrases.
+- BOLDING: Use markdown to **bold** strictly 1-3 single nouns (technical skills, tools, or specific metrics) per bullet. NEVER bold verbs, action phrases, or entire sentences. Correct: "using **Redis** to improve speed by **40%**". Incorrect: "**using Redis to improve speed**".
 - SKILLS FORMATTING: Organize skills into logical categories. The category name MUST be bolded and followed by a colon. Do NOT bold the skills themselves. Example: **Languages:** Python, SQL
 
 [FALLBACK]
@@ -155,7 +155,7 @@ Make minimal changes to adapt an EXISTING tailored resume to a NEW job descripti
 - REPHRASING: Rephrase bullets slightly to highlight overlapping keywords. Do NOT exaggerate or inflate accomplishments.
 - HALLUCINATIONS: STRICT PROHIBITION. Do NOT add fabricated skills, tools, or responsibilities.
 - RETENTION: Keep ALL bullet points. Do NOT drop, shorten, or remove any sections, employers, or entries.
-- BOLDING: Use markdown to **bold** ONLY 1-3 key terms per bullet.
+- BOLDING: Use markdown to **bold** strictly 1-3 single nouns (technical skills, tools, or specific metrics) per bullet. NEVER bold verbs, action phrases, or entire sentences. Correct: "using **Redis** to improve speed by **40%**". Incorrect: "**using Redis to improve speed**".
 - SKILLS FORMATTING: Organize skills into logical categories. The category name MUST be bolded and followed by a colon. Do NOT bold the skills themselves. Example: **Languages:** Python, SQL
 
 [FALLBACK]
@@ -243,7 +243,7 @@ Rewrite the Draft Resume by fixing ONLY the specific issues mentioned in the Cri
 - Do NOT change the structure of the resume (employers, dates, layout).
 - Do NOT remove any bullet points. You may only rewrite existing ones.
 - Do NOT invent new metrics or hallucinate technologies. 
-- Maintain formatting rules (e.g., bolding 1-3 key terms per bullet).
+- Maintain formatting rules (e.g., bolding strictly 1-3 single nouns or metrics per bullet. NEVER bold action phrases).
 - NEVER wrap your output in markdown code blocks.
 
 [FALLBACK]
