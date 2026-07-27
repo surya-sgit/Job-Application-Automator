@@ -19,7 +19,19 @@ You are an expert technical recruiter. Analyze the provided job description and 
 - If no red flags are found, return an empty array.`;
 
 export function analyzeUser(jd: string): string {
-  return `[INPUT PARAMETERS]\nJob description:\n"""\n${jd.slice(0, 3000)}\n"""\n\n[OUTPUT SCHEMA]\nExtract the job title, company name, seniority, domain, hard skills, soft skills, ATS keywords, key responsibilities, redFlags, and recruiterEmail.`;
+  return `[INPUT PARAMETERS]\nJob description:\n"""\n${jd.slice(0, 3000)}\n"""\n\n[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+{
+  "jobTitle": string,
+  "companyName": string,
+  "seniority": string,
+  "hardSkills": string[],
+  "softSkills": string[],
+  "keywords": string[],
+  "responsibilities": string[],
+  "domain": string,
+  "redFlags": string[],
+  "recruiterEmail": string
+}`;
 }
 
 export const RESUME_PARSE_SYSTEM = `[TASK]
@@ -35,7 +47,22 @@ Extract structured profile data from a raw resume/CV text.
 - If a requested field is absent in the text, leave it empty or null. Do not hallucinate data.`;
 
 export function resumeParseUser(text: string): string {
-  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>\n\n[OUTPUT SCHEMA]\nExtract name, headline, contact info, links, summary, skills, certifications, achievements, projects, experience, education.`;
+  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>\n\n[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+{
+  "name": string,
+  "title": string,
+  "email": string,
+  "phone": string,
+  "location": string,
+  "links": string[],
+  "summary": string,
+  "skills": string[],
+  "certifications": string[],
+  "achievements": string[],
+  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }],
+  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
+  "education": [{ "school": string, "degree": string, "year": string, "details": string }]
+}`;
 }
 
 export const QUESTIONS_SYSTEM = `[TASK]
@@ -49,7 +76,13 @@ Given a JD analysis and the candidate's relevant material, generate 3-6 short, s
 - NEVER wrap your output in markdown code blocks. Return ONLY raw JSON.
 
 [FALLBACK]
-- If the candidate's profile perfectly matches the JD and is extremely thorough, return an empty array instead of asking useless questions.`;
+- If the candidate's profile perfectly matches the JD and is extremely thorough, return an empty array instead of asking useless questions.
+
+[OUTPUT SCHEMA]
+You MUST return a JSON object strictly matching this exact schema:
+{
+  "questions": string[]
+}`;
 
 export const TAILOR_SYSTEM = `[TASK]
 Rewrite the candidate's material into a tailored resume optimized for the target job description.
@@ -116,6 +149,18 @@ export function tailorContext(
     answers && Object.keys(answers).length
       ? `USER ANSWERS TO CLARIFYING QUESTIONS:\n${JSON.stringify(answers)}`
       : "",
+    `[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+{
+  "name": string,
+  "title": string,
+  "contact": { "email": string, "phone": string, "location": string, "links": string[] },
+  "summary": string,
+  "skills": string[],
+  "certifications": string[],
+  "achievements": string[],
+  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
+  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }]
+}`,
     "Produce the tailored resume now.",
   ]
     .filter(Boolean)
@@ -150,7 +195,11 @@ Candidate: ${args.candidateName}
 Strongest relevant points:\n- ${args.topPoints.join("\n- ")}
 
 [OUTPUT SCHEMA]
-Return the email subject and body.`;
+You MUST return a JSON object strictly matching this exact schema:
+{
+  "subject": string,
+  "body": string
+}`;
 }
 
 export const TWEAK_SYSTEM = `[TASK]
@@ -239,7 +288,10 @@ Critique the provided draft resume strictly against 5 quality criteria.
 - If a bullet is flawless across all 5 criteria, do not flag it.`;
 
 export function criticContext(draftResume: any): string {
-  return `[INPUT PARAMETERS]\nDRAFT RESUME FOR CRITIQUE:\n${JSON.stringify(draftResume)}\n\n[OUTPUT SCHEMA]\nReturn an array of specific critiques mapping exactly to the provided draft.`;
+  return `[INPUT PARAMETERS]\nDRAFT RESUME FOR CRITIQUE:\n${JSON.stringify(draftResume)}\n\n[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+{
+  "critiques": [{ "section": string, "issue": string, "suggestedFix": string }]
+}`;
 }
 
 export const EDITOR_SYSTEM = `[TASK]
@@ -259,6 +311,17 @@ export function editorContext(draftResume: any, critiques: any): string {
   return [
     `[INPUT PARAMETERS]\nDRAFT RESUME:\n${JSON.stringify(draftResume)}`,
     `CRITIQUES TO FIX:\n${JSON.stringify(critiques)}`,
-    "[OUTPUT SCHEMA]\nRewrite the resume to address these critiques now."
+    `[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+{
+  "name": string,
+  "title": string,
+  "contact": { "email": string, "phone": string, "location": string, "links": string[] },
+  "summary": string,
+  "skills": string[],
+  "certifications": string[],
+  "achievements": string[],
+  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
+  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }]
+}`
   ].join("\n\n");
 }
