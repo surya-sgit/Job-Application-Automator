@@ -85,11 +85,42 @@ export async function safeGenerateObject<T>(opts: {
     }
     cleanText = cleanText.trim();
 
-    // Fallback: extract strictly from first '{' to last '}' to ignore any remaining conversational filler
+    // Fallback: strictly extract the first complete JSON object using brace depth tracking
     const firstBrace = cleanText.indexOf('{');
-    const lastBrace = cleanText.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+    if (firstBrace !== -1) {
+      let depth = 0;
+      let lastBrace = -1;
+      let inString = false;
+      let escapeNext = false;
+      
+      for (let i = firstBrace; i < cleanText.length; i++) {
+        const char = cleanText[i];
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        if (char === '\\') {
+          escapeNext = true;
+          continue;
+        }
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (char === '{') depth++;
+          else if (char === '}') depth--;
+          
+          if (depth === 0) {
+            lastBrace = i;
+            break;
+          }
+        }
+      }
+      
+      if (lastBrace !== -1) {
+        cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+      }
     }
 
     const parsed = JSON.parse(cleanText);
