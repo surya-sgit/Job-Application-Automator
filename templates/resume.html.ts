@@ -70,11 +70,29 @@ function parseSkills(skillsList: string[]): string {
   const ungrouped: string[] = [];
 
   for (const s of skillsList) {
+    let cat = "";
+    let val = "";
+    
+    // First try splitting by ':'
     if (s.includes(":")) {
-      const [cat, val] = s.split(":");
-      const c = cat.trim();
-      if (!categories[c]) categories[c] = [];
-      categories[c].push(val.trim());
+      const parts = s.split(":");
+      cat = parts[0].trim();
+      val = parts.slice(1).join(":").trim();
+    } 
+    // Fallback: look for "**Category** values" if the AI forgot the colon
+    else if (s.startsWith("**")) {
+      const endIdx = s.indexOf("**", 2);
+      if (endIdx !== -1) {
+        cat = s.substring(2, endIdx).trim();
+        val = s.substring(endIdx + 2).trim();
+      }
+    }
+
+    if (cat && val) {
+      // Clean up markdown bolding from category name since we wrap it in <strong> anyway
+      cat = cat.replace(/\*\*/g, "").trim();
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(val);
     } else {
       ungrouped.push(s.trim());
     }
