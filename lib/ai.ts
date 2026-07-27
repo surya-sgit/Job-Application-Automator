@@ -70,15 +70,27 @@ export async function safeGenerateObject<T>(opts: {
 
   try {
     let cleanText = text.trim();
-    if (cleanText.startsWith("\`\`\`json")) {
+    
+    // Strip <think> reasoning blocks from models like DeepSeek-R1 or Qwen
+    cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    // Strip markdown code block wrappers
+    if (cleanText.startsWith("```json")) {
       cleanText = cleanText.substring(7);
-    } else if (cleanText.startsWith("\`\`\`")) {
+    } else if (cleanText.startsWith("```")) {
       cleanText = cleanText.substring(3);
     }
-    if (cleanText.endsWith("\`\`\`")) {
+    if (cleanText.endsWith("```")) {
       cleanText = cleanText.substring(0, cleanText.length - 3);
     }
     cleanText = cleanText.trim();
+
+    // Fallback: extract strictly from first '{' to last '}' to ignore any remaining conversational filler
+    const firstBrace = cleanText.indexOf('{');
+    const lastBrace = cleanText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+    }
 
     const parsed = JSON.parse(cleanText);
     const object = opts.schema.parse(parsed);
