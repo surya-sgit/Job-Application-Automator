@@ -22,6 +22,7 @@ import {
   tailorLatexContext,
   criticContext,
   editorContext,
+  questionsContext,
 } from "@/lib/prompts";
 import { z } from "zod";
 
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     const secrets = await readSecrets(userId);
 
     if (action === "questions") {
-      const context = tailorContext(analysis, profile, projects, answers);
+      const context = questionsContext(analysis, profile, projects);
       const { object, usage } = await safeGenerateObject({
         model: await getModel({ cheap: true, secrets }),
         schema: QuestionsSchema,

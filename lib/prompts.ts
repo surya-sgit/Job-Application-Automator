@@ -84,6 +84,25 @@ You MUST return a JSON object strictly matching this exact schema:
   "questions": string[]
 }`;
 
+export function questionsContext(
+  analysis: JdAnalysis,
+  profile: Profile,
+  matchedProjects: Project[]
+): string {
+  const compactProfile = {
+    skills: profile.skills,
+    experience: profile.experience.map(e => ({ title: e.title, bullets: e.bullets })),
+    education: profile.education.map(e => ({ degree: e.degree })),
+  };
+
+  return [
+    `[INPUT PARAMETERS]\nTARGET JOB ANALYSIS:\n${JSON.stringify(analysis)}`,
+    `CANDIDATE (relevant subset only):\n${JSON.stringify(compactProfile)}`,
+    `MATCHED PROJECTS:\n${JSON.stringify(matchedProjects.map(p => ({ title: p.title, bullets: p.bullets })))}`,
+    "Generate the clarifying questions now."
+  ].join("\n\n");
+}
+
 export const TAILOR_SYSTEM = `[TASK]
 Rewrite the candidate's material into a tailored resume optimized for the target job description.
 
