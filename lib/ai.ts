@@ -88,9 +88,11 @@ export async function safeGenerateObject<T>(opts: {
     cleanText = cleanText.trim();
 
     let parsed: any = null;
+    let object: any = null;
     let searchStartIndex = 0;
+    let lastError: Error | null = null;
 
-    while (parsed === null && searchStartIndex < cleanText.length) {
+    while (object === null && searchStartIndex < cleanText.length) {
       const firstBrace = cleanText.indexOf('{', searchStartIndex);
       if (firstBrace === -1) break;
 
@@ -128,9 +130,11 @@ export async function safeGenerateObject<T>(opts: {
         const candidate = cleanText.substring(firstBrace, lastBrace + 1);
         try {
           parsed = JSON.parse(candidate);
-          break; // Successfully found and parsed a valid JSON object!
-        } catch (e) {
-          // Candidate was not valid JSON (e.g. a Typescript interface with unquoted types like "jobTitle": string)
+          object = opts.schema.parse(parsed);
+          break; // Successfully found, parsed, AND validated the object!
+        } catch (e: any) {
+          lastError = e;
+          // Candidate was not valid JSON, or it didn't match the schema
           // Start searching for the next '{' after the current firstBrace
           searchStartIndex = firstBrace + 1;
         }
@@ -140,11 +144,13 @@ export async function safeGenerateObject<T>(opts: {
       }
     }
 
-    if (!parsed) {
+    if (!object) {
+      if (lastError) {
+        throw lastError;
+      }
       throw new Error("No valid JSON object found in the response.");
     }
 
-    const object = opts.schema.parse(parsed);
     return { object, usage };
   } catch (e: any) {
     console.error("[safeGenerateObject] parse error:", e, "\nRaw text:", text);
