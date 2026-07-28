@@ -57,7 +57,7 @@ export function resumeParseUser(text: string): string {
   "location": string,
   "links": string[],
   "summary": string,
-  "skills": string[],
+  "skills": string[], // CRITICAL: Store entire categories as single strings (e.g. "Programming: Python, SQL"). DO NOT split individual skills.
   "certifications": string[],
   "achievements": string[],
   "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }],
