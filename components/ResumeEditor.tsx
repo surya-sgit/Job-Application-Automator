@@ -174,11 +174,11 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
           <h3 className="font-semibold text-lg text-slate-100 border-b pb-2">Skills</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-white/5/50 border border-white/5 rounded-xl text-slate-400 text-sm leading-relaxed shadow-inner">
-              <p>{originalResume?.skills.join(", ") || "No skills provided."}</p>
+              <p className="whitespace-pre-wrap">{originalResume?.skills.join("\n") || "No skills provided."}</p>
             </div>
             
             <div className="relative group">
-              {originalResume?.skills && originalResume.skills.join(", ") !== edited.skills.join(", ") && viewMode === "edit" && (
+              {originalResume?.skills && originalResume.skills.join("\n") !== edited.skills.join("\n") && viewMode === "edit" && (
                 <div className="absolute -top-3 right-3 flex items-center gap-2 z-10">
                   <button 
                     onClick={revertSkills}
@@ -194,18 +194,18 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
               )}
               {viewMode === "diff" ? (
                 <div className="w-full text-sm leading-relaxed p-4 rounded-xl border border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20">
-                  <DiffViewer original={originalResume?.skills.join(", ") || ""} modified={edited.skills.join(", ")} />
+                  <DiffViewer original={originalResume?.skills.join("\n") || ""} modified={edited.skills.join("\n")} />
                 </div>
               ) : (
                 <TextareaAutosize
                   minRows={2}
                   className={`input w-full text-sm leading-relaxed p-4 rounded-xl resize-none transition-shadow ${
-                    originalResume?.skills && originalResume.skills.join(", ") !== edited.skills.join(", ")
+                    originalResume?.skills && originalResume.skills.join("\n") !== edited.skills.join("\n")
                       ? "border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20 focus:border-brand focus:ring-brand/20"
                       : "bg-dark-800/50"
                   }`}
-                  value={edited.skills.join(", ")}
-                  onChange={(e) => setEdited({ ...edited, skills: e.target.value.split(",").map(s => s.trim()) })}
+                  value={edited.skills.join("\n")}
+                  onChange={(e) => setEdited({ ...edited, skills: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) })}
                 />
               )}
             </div>

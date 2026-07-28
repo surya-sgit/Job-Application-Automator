@@ -381,11 +381,11 @@ export default function ProfilePage() {
           />
         </div>
         <div>
-          <label className="label">Skills (comma separated)</label>
+          <label className="label">Skills (one category per line)</label>
           <textarea
             className="input min-h-[60px]"
-            value={p.skills.join(", ")}
-            onChange={(e) => set("skills", toList(e.target.value))}
+            value={p.skills.join("\n")}
+            onChange={(e) => set("skills", e.target.value.split("\n").map(s => s.trim()).filter(Boolean))}
             placeholder="React, TypeScript, Node.js, PostgreSQL, AWS"
           />
         </div>
