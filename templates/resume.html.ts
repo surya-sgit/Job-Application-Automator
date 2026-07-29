@@ -63,47 +63,15 @@ function esc(s: string): string {
     .replace(/\*([^*]+)\*/g, "<em>$1</em>");
 }
 
-function parseSkills(skillsList: string[]): string {
-  if (!skillsList || skillsList.length === 0) return "";
-
-  const categories: Record<string, string[]> = {};
-  const ungrouped: string[] = [];
-
-  for (const s of skillsList) {
-    let cat = "";
-    let val = "";
-    
-    // First try splitting by ':'
-    if (s.includes(":")) {
-      const parts = s.split(":");
-      cat = parts[0].trim();
-      val = parts.slice(1).join(":").trim();
-    } 
-    // Fallback: look for "**Category** values" if the AI forgot the colon
-    else if (s.startsWith("**")) {
-      const endIdx = s.indexOf("**", 2);
-      if (endIdx !== -1) {
-        cat = s.substring(2, endIdx).trim();
-        val = s.substring(endIdx + 2).trim();
-      }
-    }
-
-    if (cat && val) {
-      // Clean up markdown bolding from category name since we wrap it in <strong> anyway
-      cat = cat.replace(/\*\*/g, "").trim();
-      if (!categories[cat]) categories[cat] = [];
-      categories[cat].push(val);
-    } else {
-      ungrouped.push(s.trim());
-    }
-  }
+function parseSkills(skillsMap: Record<string, string[]> | undefined): string {
+  if (!skillsMap || Object.keys(skillsMap).length === 0) return "";
 
   let html = "";
-  for (const [cat, vals] of Object.entries(categories)) {
-    html += `            <p><strong>${esc(cat)}</strong> ${esc(vals.join(", "))}</p>\n`;
-  }
-  if (ungrouped.length > 0) {
-    html += `            <p><strong>Skills</strong> ${esc(ungrouped.join(", "))}</p>\n`;
+  for (const [cat, vals] of Object.entries(skillsMap)) {
+    if (vals.length > 0) {
+      const cleanCat = cat.replace(/\*\*/g, "").trim();
+      html += `            <p><strong>${esc(cleanCat)}</strong> ${esc(vals.join(", "))}</p>\n`;
+    }
   }
   return html;
 }
@@ -197,7 +165,7 @@ ${bullets(p.bullets)}
     .join("\n");
 
   // --- Skills ---
-  const skillsHtml = parseSkills(r.skills || []);
+  const skillsHtml = parseSkills(r.skills || {});
 
   // --- Certifications & Achievements ---
   const certifications = (r.certifications || [])

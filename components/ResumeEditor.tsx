@@ -16,6 +16,30 @@ interface Props {
   onCancel: () => void;
 }
 
+function recordToStr(rec: Record<string, string[]> = {}): string {
+  return Object.entries(rec).map(([cat, items]) => `${cat}:\n${items.join(", ")}`).join("\n\n");
+}
+
+function strToRecord(str: string): Record<string, string[]> {
+  const rec: Record<string, string[]> = {};
+  const blocks = str.split(/\n\n+/);
+  for (const block of blocks) {
+    if (!block.trim()) continue;
+    const lines = block.trim().split("\n");
+    if (lines.length === 1) {
+      if (!rec["Other"]) rec["Other"] = [];
+      rec["Other"].push(...lines[0].split(",").map(s => s.trim()).filter(Boolean));
+    } else {
+      let cat = lines[0].replace(/:$/, "").trim();
+      if (!cat) cat = "Other";
+      const items = lines.slice(1).join(" ").split(",").map(s => s.trim()).filter(Boolean);
+      if (!rec[cat]) rec[cat] = [];
+      rec[cat].push(...items);
+    }
+  }
+  return rec;
+}
+
 export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, onSave, onCancel }: Props) {
   const [edited, setEdited] = useState<TailoredResume>(JSON.parse(JSON.stringify(draftResume)));
   const [viewMode, setViewMode] = useState<"diff" | "edit">("diff");
@@ -59,7 +83,7 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
 
   const revertSkills = () => {
     if (originalResume?.skills) {
-      setEdited({ ...edited, skills: [...originalResume.skills] });
+      setEdited({ ...edited, skills: JSON.parse(JSON.stringify(originalResume.skills)) });
     }
   };
 
@@ -174,11 +198,11 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
           <h3 className="font-semibold text-lg text-slate-100 border-b pb-2">Skills</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-white/5/50 border border-white/5 rounded-xl text-slate-400 text-sm leading-relaxed shadow-inner">
-              <p className="whitespace-pre-wrap">{originalResume?.skills.join("\n") || "No skills provided."}</p>
+              <p className="whitespace-pre-wrap">{originalResume?.skills ? recordToStr(originalResume.skills as any) : "No skills provided."}</p>
             </div>
             
             <div className="relative group">
-              {originalResume?.skills && originalResume.skills.join("\n") !== edited.skills.join("\n") && viewMode === "edit" && (
+              {originalResume?.skills && recordToStr(originalResume.skills as any) !== recordToStr(edited.skills as any) && viewMode === "edit" && (
                 <div className="absolute -top-3 right-3 flex items-center gap-2 z-10">
                   <button 
                     onClick={revertSkills}
@@ -194,18 +218,19 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
               )}
               {viewMode === "diff" ? (
                 <div className="w-full text-sm leading-relaxed p-4 rounded-xl border border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20">
-                  <DiffViewer original={originalResume?.skills.join("\n") || ""} modified={edited.skills.join("\n")} />
+                  <DiffViewer original={originalResume?.skills ? recordToStr(originalResume.skills as any) : ""} modified={recordToStr(edited.skills as any)} />
                 </div>
               ) : (
                 <TextareaAutosize
-                  minRows={2}
+                  minRows={3}
                   className={`input w-full text-sm leading-relaxed p-4 rounded-xl resize-none transition-shadow ${
-                    originalResume?.skills && originalResume.skills.join("\n") !== edited.skills.join("\n")
+                    originalResume?.skills && recordToStr(originalResume.skills as any) !== recordToStr(edited.skills as any)
                       ? "border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20 focus:border-brand focus:ring-brand/20"
                       : "bg-dark-800/50"
                   }`}
-                  value={edited.skills.join("\n")}
-                  onChange={(e) => setEdited({ ...edited, skills: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) })}
+                  value={recordToStr(edited.skills as any)}
+                  onChange={(e) => setEdited({ ...edited, skills: strToRecord(e.target.value) })}
+                  placeholder="Programming:\nPython, TypeScript"
                 />
               )}
             </div>

@@ -12,7 +12,7 @@ const EMPTY: Profile = {
   location: "",
   links: [],
   summary: "",
-  skills: [],
+  skills: {},
   certifications: [],
   achievements: [],
   projects: [],
@@ -25,6 +25,42 @@ function uid() {
   return typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
+}
+
+function recordToStr(rec: Record<string, string[]> = {}): string {
+  return Object.entries(rec).map(([cat, items]) => `${cat}:\n${items.join(", ")}`).join("\n\n");
+}
+
+function strToRecord(str: string): Record<string, string[]> {
+  const rec: Record<string, string[]> = {};
+  const blocks = str.split(/\n\n+/);
+  for (const block of blocks) {
+    if (!block.trim()) continue;
+    const lines = block.trim().split("\n");
+    if (lines.length === 1) {
+      if (!rec["Other"]) rec["Other"] = [];
+      rec["Other"].push(...lines[0].split(",").map(s => s.trim()).filter(Boolean));
+    } else {
+      let cat = lines[0].replace(/:$/, "").trim();
+      if (!cat) cat = "Other";
+      const items = lines.slice(1).join(" ").split(",").map(s => s.trim()).filter(Boolean);
+      if (!rec[cat]) rec[cat] = [];
+      rec[cat].push(...items);
+    }
+  }
+  return rec;
+}
+
+function mergeRecords(a: Record<string, string[]> = {}, b: Record<string, string[]> = {}): Record<string, string[]> {
+  const res: Record<string, string[]> = { ...a };
+  for (const [k, v] of Object.entries(b)) {
+    if (res[k]) {
+      res[k] = dedupeStrings([...res[k], ...v]);
+    } else {
+      res[k] = v;
+    }
+  }
+  return res;
 }
 
 // Parse comma / newline separated text into a trimmed array.
@@ -92,7 +128,7 @@ function mergeProfile(
       location: pick(existing.location, parsed.location),
       summary: pick(existing.summary, parsed.summary),
       links: dedupeStrings([...existing.links, ...parsed.links]),
-      skills: dedupeStrings([...existing.skills, ...parsed.skills]),
+      skills: mergeRecords(existing.skills, parsed.skills),
       certifications: dedupeStrings([...existing.certifications, ...parsed.certifications]),
       achievements: dedupeStrings([...existing.achievements, ...parsed.achievements]),
       projects: [...existing.projects, ...newProjects],
@@ -270,7 +306,7 @@ export default function ProfilePage() {
   if (!loaded) return <p className="text-slate-500">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Your Profile</h1>
         <p className="text-sm text-slate-500">
@@ -381,12 +417,12 @@ export default function ProfilePage() {
           />
         </div>
         <div>
-          <label className="label">Skills (one category per line)</label>
+          <label className="label">Skills (grouped by category)</label>
           <textarea
-            className="input min-h-[60px]"
-            value={p.skills.join("\n")}
-            onChange={(e) => set("skills", e.target.value.split("\n").map(s => s.trim()).filter(Boolean))}
-            placeholder="React, TypeScript, Node.js, PostgreSQL, AWS"
+            className="input min-h-[120px]"
+            value={recordToStr(p.skills as any)}
+            onChange={(e) => set("skills", strToRecord(e.target.value))}
+            placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"}
           />
         </div>
       </div>

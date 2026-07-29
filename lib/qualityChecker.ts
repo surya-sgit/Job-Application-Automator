@@ -40,7 +40,7 @@ export function analyzeResume(resume: TailoredResume, analysis: JdAnalysis | nul
   // Compile full resume text for keyword / cliche searching
   const fullText = [
     resume.summary,
-    ...resume.skills,
+    ...Object.values(resume.skills || {}).flat(),
     ...resume.experience.flatMap(e => [e.company, e.title, ...e.bullets]),
     ...resume.projects.flatMap(p => [p.title, ...p.bullets]),
   ].join(" ").toLowerCase();

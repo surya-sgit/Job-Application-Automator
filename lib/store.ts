@@ -138,15 +138,25 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 // ---------- Profile ----------
 // `userId` is ignored in file-fallback (single-user, no-DB) mode.
 
+function migrateSkills(obj: any) {
+  if (obj && obj.skills && Array.isArray(obj.skills)) {
+    const flat = obj.skills.filter((s: any) => typeof s === "string");
+    obj.skills = flat.length > 0 ? { "Imported Skills": flat } : {};
+  }
+}
+
 export async function readProfile(userId: string): Promise<Profile> {
   try {
     if (USE_DB) {
       const raw = await kvGet(userId, "profile");
       if (!raw) return ProfileSchema.parse({});
-      return ProfileSchema.parse(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      migrateSkills(parsed);
+      return ProfileSchema.parse(parsed);
     }
     if (!fs.existsSync(PROFILE_FILE)) return ProfileSchema.parse({});
     const raw = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf8"));
+    migrateSkills(raw);
     return ProfileSchema.parse(raw);
   } catch {
     return ProfileSchema.parse({});
@@ -280,11 +290,15 @@ export async function readResumes(userId: string): Promise<SavedResume[]> {
     if (USE_DB) {
       const raw = await kvGet(userId, "resumes");
       if (!raw) return [];
-      return JSON.parse(raw) as SavedResume[];
+      const parsed = JSON.parse(raw) as SavedResume[];
+      parsed.forEach(r => migrateSkills(r.resume));
+      return parsed;
     }
     const file = path.join(DATA_DIR, "resumes.json");
     if (!fs.existsSync(file)) return [];
-    return JSON.parse(fs.readFileSync(file, "utf8")) as SavedResume[];
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8")) as SavedResume[];
+    parsed.forEach(r => migrateSkills(r.resume));
+    return parsed;
   } catch {
     return [];
   }
