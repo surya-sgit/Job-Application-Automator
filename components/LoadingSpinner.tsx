@@ -27,7 +27,7 @@ export default function LoadingSpinner({ message = "Loading..." }: Props) {
       <motion.p 
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        className="text-sm font-medium text-brand-300 tracking-wide"
+        className="text-sm font-medium text-brand-300 tracking-wide text-center"
       >
         {message}
       </motion.p>

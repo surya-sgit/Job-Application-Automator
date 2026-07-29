@@ -127,7 +127,7 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
         {/* Summary */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg text-slate-100 border-b pb-2">Professional Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             {/* Original Left */}
             <div className="p-4 bg-white/5/50 border border-white/5 rounded-xl text-slate-400 text-sm leading-relaxed shadow-inner">
               <p>{originalResume?.summary || "No summary provided."}</p>

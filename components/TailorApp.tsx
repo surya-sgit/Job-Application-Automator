@@ -394,7 +394,7 @@ export default function TailorApp() {
     <div className="space-y-8">
       {/* Animated Step Indicator */}
       <div className="card mb-8 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 text-sm relative">
+        <div className="flex flex-wrap items-center justify-start md:justify-between gap-4 text-sm relative">
           <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-dark-800/50/5"></div>
           {STEPS.map((s, i) => {
             const isActive = step === s.key;
@@ -544,7 +544,7 @@ export default function TailorApp() {
           
           {/* Left Column: JD Insights */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="card space-y-4 sticky top-6">
+            <div className="card space-y-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar">
               <div>
                 <h2 className="font-bold text-lg text-brand mb-1">JD Insights</h2>
                 <p className="text-xs text-slate-400">Key details extracted by the AI</p>

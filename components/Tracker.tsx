@@ -13,12 +13,12 @@ function DroppableColumn({ id, title, apps, onEdit, onDelete }: { id: AppStatus,
   const { setNodeRef } = useDroppable({ id });
 
   return (
-    <div className="flex flex-col bg-white/5 rounded-xl border border-white/5 p-3 min-h-[500px] w-72 shrink-0">
-      <div className="flex justify-between items-center mb-4 px-2">
+    <div className="flex flex-col bg-white/5 rounded-xl border border-white/5 p-3 min-h-[500px] max-h-[calc(100vh-16rem)] w-72 shrink-0">
+      <div className="flex justify-between items-center mb-4 px-2 shrink-0">
         <h3 className="font-semibold text-slate-200 text-sm">{title}</h3>
         <span className="bg-dark-800/50 text-slate-400 text-xs font-bold px-2 py-0.5 rounded-full shadow-xl">{apps.length}</span>
       </div>
-      <div ref={setNodeRef} className="flex-1 space-y-3">
+      <div ref={setNodeRef} className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-1">
         {apps.map((app) => (
           <DraggableCard key={app.id} app={app} onEdit={() => onEdit(app)} onDelete={() => onDelete(app.id)} />
         ))}
@@ -224,8 +224,8 @@ export default function Tracker() {
 
       {/* Edit Modal */}
       {editingApp && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-dark-800/50 rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-dark-800/50 rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold">{editingApp.companyName}</h2>
