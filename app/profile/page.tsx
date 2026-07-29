@@ -644,11 +644,13 @@ export default function ProfilePage() {
         />
       </div>
 
-      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-brand-500/20 bg-dark-900/60 p-4 shadow-2xl shadow-brand-500/10 backdrop-blur-xl">
-        <button className="btn-primary" onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save profile"}
-        </button>
-        {msg && <span className="text-sm text-slate-500">{msg}</span>}
+      <div className="sticky bottom-8 mt-12 flex justify-center w-full z-10 pointer-events-none">
+        <div className="flex flex-col items-center gap-3 pointer-events-auto">
+          <button className="btn-primary rounded-full px-10 shadow-[0_0_30px_rgba(139,92,246,0.3)] border-brand-400/50" onClick={save} disabled={saving}>
+            {saving ? "Saving…" : "Save profile"}
+          </button>
+          {msg && <span className="text-sm font-medium text-brand-300 bg-dark-900/80 px-4 py-1 rounded-full border border-brand-500/20 backdrop-blur-md shadow-xl">{msg}</span>}
+        </div>
       </div>
     </div>
   );
