@@ -111,6 +111,7 @@ Rewrite the candidate's material into a tailored resume optimized for the target
 - REPHRASING: Rephrase bullets to be active and impactful, integrating JD keywords ONLY if they logically align with the candidate's actual work.
 - HALLUCINATIONS: STRICT PROHIBITION. Do NOT invent or fabricate technologies, tools, metrics, employers, degrees, dates, or accomplishments.
 - BOLDING: Use markdown to **bold** strictly 1-3 single nouns (technical skills, tools, or specific metrics) per bullet. NEVER bold verbs, action phrases, or entire sentences. Correct: "using **Redis** to improve speed by **40%**". Incorrect: "**using Redis to improve speed**".
+- SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool (like 'Task Queues' or 'NLP Libraries'). Group them logically.
 - NEVER wrap your output in markdown code blocks. Return ONLY raw JSON.
 
 [FALLBACK]
