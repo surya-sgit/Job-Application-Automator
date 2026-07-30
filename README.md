@@ -5,8 +5,10 @@
 Paste a job description → get a cleanly-formatted, JD-tailored one-page resume (PDF) → email it to HR in one click. Runs locally for free, or deploy it to Vercel (also free) to use it from your phone — with real per-user accounts.
 
 ## Features
-- **Premium UI/UX:** Built with a stunning dark-mode glassmorphic aesthetic and fluid `framer-motion` animations for a sleek, modern feel.
+- **Premium UI/UX:** Built with a stunning dark-mode glassmorphic aesthetic, fluid `framer-motion` animations, a responsive drag-and-drop Kanban tracker, and side-by-side resume diffing.
 - **Tailor Resume** from any pasted JD, with AI clarifying questions first.
+- **Smart Intercept Modals:** Seamlessly prompts you to fill out missing profile data before attempting a JD analysis, preventing wasted time.
+- **Robust Skill Categorization:** Skills are strictly mapped to categories in a crash-proof dictionary schema, ensuring precise resume tailoring.
 - **Multiple projects** in your profile — the tool auto-selects the ones that match each JD (locally, **zero API tokens**).
 - **Any AI provider** — Claude, OpenAI, Gemini, Groq, or local Ollama. Pick in Settings.
 - **One-page PDF** with auto-fit spacing (never overflows).

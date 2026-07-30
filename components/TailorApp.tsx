@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, AlertTriangle } from "lucide-react";
+import { Check, AlertTriangle, User } from "lucide-react";
+import Link from "next/link";
 import ResumePreview from "@/components/ResumePreview";
 import ResumeEditor from "@/components/ResumeEditor";
 import { fetchJson } from "@/lib/clientFetch";
@@ -41,6 +42,7 @@ export default function TailorApp() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [profileEmpty, setProfileEmpty] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [rawProfile, setRawProfile] = useState<any>(null);
 
   const [analysis, setAnalysis] = useState<JdAnalysis | null>(null);
@@ -109,6 +111,10 @@ export default function TailorApp() {
 
   // Step 1 → 2: analyze the JD + match projects locally, then stop for review.
   async function analyze() {
+    if (profileEmpty) {
+      setShowProfileModal(true);
+      return;
+    }
     setError("");
     setSendResult("");
     try {
@@ -531,10 +537,6 @@ export default function TailorApp() {
           >
             Analyze JD →
           </button>
-          <p className="text-xs text-slate-400">
-            Make sure your <a className="text-brand underline" href="/profile">profile</a> and{" "}
-            <a className="text-brand underline" href="/settings">AI settings</a> are filled first.
-          </p>
         </div>
       )}
 
@@ -977,6 +979,46 @@ export default function TailorApp() {
         </div>
       )}
       </motion.div>
+      </AnimatePresence>
+
+      {/* Empty Profile Intercept Modal */}
+      <AnimatePresence>
+        {showProfileModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/80 backdrop-blur-xl p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-dark-800/90 rounded-2xl border border-white/10 p-8 shadow-2xl max-w-md w-full text-center space-y-6"
+            >
+              <div className="w-16 h-16 mx-auto bg-brand-500/20 text-brand-400 flex items-center justify-center rounded-full shadow-inner border border-brand-500/30">
+                <User size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">Profile Required</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  We need your baseline experience to accurately tailor this resume. Let's set up your profile first.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  className="btn-ghost flex-1 py-3 text-sm font-medium" 
+                  onClick={() => setShowProfileModal(false)}
+                >
+                  Cancel
+                </button>
+                <Link href="/profile" className="btn-primary flex-1 py-3 text-sm">
+                  Go to Profile →
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Busy Overlay Loader */}
