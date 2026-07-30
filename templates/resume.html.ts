@@ -63,14 +63,14 @@ function esc(s: string): string {
     .replace(/\*([^*]+)\*/g, "<em>$1</em>");
 }
 
-function parseSkills(skillsMap: Record<string, string[]> | undefined): string {
-  if (!skillsMap || Object.keys(skillsMap).length === 0) return "";
+function parseSkills(skillsArray: { category: string, items: string[] }[] | undefined): string {
+  if (!skillsArray || skillsArray.length === 0) return "";
 
   let html = "";
-  for (const [cat, vals] of Object.entries(skillsMap)) {
-    if (vals.length > 0) {
-      const cleanCat = cat.replace(/\*\*/g, "").trim();
-      html += `            <p><strong>${esc(cleanCat)}</strong> ${esc(vals.join(", "))}</p>\n`;
+  for (const group of skillsArray) {
+    if (group.items && group.items.length > 0) {
+      const cleanCat = group.category.replace(/\*\*/g, "").trim();
+      html += `            <p><strong>${esc(cleanCat)}</strong> ${esc(group.items.join(", "))}</p>\n`;
     }
   }
   return html;
@@ -165,7 +165,7 @@ ${bullets(p.bullets)}
     .join("\n");
 
   // --- Skills ---
-  const skillsHtml = parseSkills(r.skills || {});
+  const skillsHtml = parseSkills(r.skills as any);
 
   // --- Certifications & Achievements ---
   const certifications = (r.certifications || [])

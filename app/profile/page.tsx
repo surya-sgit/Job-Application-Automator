@@ -12,7 +12,7 @@ const EMPTY: Profile = {
   location: "",
   links: [],
   summary: "",
-  skills: {},
+  skills: [],
   certifications: [],
   achievements: [],
   projects: [],
@@ -27,37 +27,43 @@ function uid() {
     : Math.random().toString(36).slice(2);
 }
 
-function recordToStr(rec: Record<string, string[]> = {}): string {
-  return Object.entries(rec).map(([cat, items]) => `${cat}:\n${items.join(", ")}`).join("\n\n");
+type SkillGroup = { category: string, items: string[] };
+
+function arrayToStr(arr: SkillGroup[] = []): string {
+  return arr.map(g => `${g.category}:\n${g.items.join(", ")}`).join("\n\n");
 }
 
-function strToRecord(str: string): Record<string, string[]> {
-  const rec: Record<string, string[]> = {};
+function strToArray(str: string): SkillGroup[] {
+  const arr: SkillGroup[] = [];
   const blocks = str.split(/\n\n+/);
   for (const block of blocks) {
     if (!block.trim()) continue;
     const lines = block.trim().split("\n");
     if (lines.length === 1) {
-      if (!rec["Other"]) rec["Other"] = [];
-      rec["Other"].push(...lines[0].split(",").map(s => s.trim()).filter(Boolean));
+      const existing = arr.find(a => a.category === "Other");
+      const items = lines[0].split(",").map(s => s.trim()).filter(Boolean);
+      if (existing) existing.items.push(...items);
+      else arr.push({ category: "Other", items });
     } else {
       let cat = lines[0].replace(/:$/, "").trim();
       if (!cat) cat = "Other";
       const items = lines.slice(1).join(" ").split(",").map(s => s.trim()).filter(Boolean);
-      if (!rec[cat]) rec[cat] = [];
-      rec[cat].push(...items);
+      const existing = arr.find(a => a.category === cat);
+      if (existing) existing.items.push(...items);
+      else arr.push({ category: cat, items });
     }
   }
-  return rec;
+  return arr;
 }
 
-function mergeRecords(a: Record<string, string[]> = {}, b: Record<string, string[]> = {}): Record<string, string[]> {
-  const res: Record<string, string[]> = { ...a };
-  for (const [k, v] of Object.entries(b)) {
-    if (res[k]) {
-      res[k] = dedupeStrings([...res[k], ...v]);
+function mergeArrays(a: SkillGroup[] = [], b: SkillGroup[] = []): SkillGroup[] {
+  const res: SkillGroup[] = JSON.parse(JSON.stringify(a));
+  for (const group of b) {
+    const existing = res.find(r => r.category === group.category);
+    if (existing) {
+      existing.items = dedupeStrings([...existing.items, ...group.items]);
     } else {
-      res[k] = v;
+      res.push(group);
     }
   }
   return res;
@@ -128,7 +134,7 @@ function mergeProfile(
       location: pick(existing.location, parsed.location),
       summary: pick(existing.summary, parsed.summary),
       links: dedupeStrings([...existing.links, ...parsed.links]),
-      skills: mergeRecords(existing.skills, parsed.skills),
+      skills: mergeArrays(existing.skills as any, parsed.skills as any),
       certifications: dedupeStrings([...existing.certifications, ...parsed.certifications]),
       achievements: dedupeStrings([...existing.achievements, ...parsed.achievements]),
       projects: [...existing.projects, ...newProjects],
@@ -420,8 +426,8 @@ export default function ProfilePage() {
           <label className="label">Skills (grouped by category)</label>
           <textarea
             className="input min-h-[120px]"
-            value={recordToStr(p.skills as any)}
-            onChange={(e) => set("skills", strToRecord(e.target.value))}
+            value={arrayToStr(p.skills as any)}
+            onChange={(e) => set("skills", strToArray(e.target.value))}
             placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"}
           />
         </div>

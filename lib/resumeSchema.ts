@@ -46,7 +46,10 @@ export const ProfileSchema = z.object({
   location: z.string().default(""),
   links: z.array(z.string()).default([]),
   summary: z.string().default(""),
-  skills: z.record(z.string(), z.array(z.string())).default({}).describe("Dictionary mapping categories to list of skills (e.g. {'Languages': ['Python']})"),
+  skills: z.array(z.object({
+    category: z.string(),
+    items: z.array(z.string())
+  })).default([]).describe("Array of skill categories, e.g. [{ category: 'Languages', items: ['Python'] }]"),
   certifications: z.array(z.string()).default([]),
   achievements: z.array(z.string()).default([]),
   projects: z.array(ProjectSchema).default([]),
@@ -94,7 +97,10 @@ export const ParsedProfileSchema = z.object({
   location: z.string().default(""),
   links: z.array(z.string()).default([]),
   summary: z.string().default(""),
-  skills: z.record(z.string(), z.array(z.string())).default({}).describe("Dictionary mapping categories to list of skills (e.g. {'Languages': ['Python']})"),
+  skills: z.array(z.object({
+    category: z.string(),
+    items: z.array(z.string())
+  })).default([]).describe("Array of skill categories, e.g. [{ category: 'Languages', items: ['Python'] }]"),
   certifications: z.array(z.string()).default([]),
   achievements: z.array(z.string()).default([]),
   projects: z.array(ParsedProjectSchema).default([]),
@@ -118,7 +124,10 @@ export const TailoredResumeSchema = z.object({
     links: z.array(z.string()).default([]),
   }),
   summary: z.string(),
-  skills: z.record(z.string(), z.array(z.string())).default({}).describe("Dictionary mapping categories to list of skills (e.g. {'Languages': ['Python']})"),
+  skills: z.array(z.object({
+    category: z.string(),
+    items: z.array(z.string())
+  })).default([]).describe("Array of skill categories, e.g. [{ category: 'Languages', items: ['Python'] }]"),
   certifications: z.array(z.string()).default([]),
   achievements: z.array(z.string()).default([]),
   experience: z

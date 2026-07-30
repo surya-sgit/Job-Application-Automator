@@ -16,28 +16,33 @@ interface Props {
   onCancel: () => void;
 }
 
-function recordToStr(rec: Record<string, string[]> = {}): string {
-  return Object.entries(rec).map(([cat, items]) => `${cat}:\n${items.join(", ")}`).join("\n\n");
+type SkillGroup = { category: string, items: string[] };
+
+function arrayToStr(arr: SkillGroup[] = []): string {
+  return arr.map(g => `${g.category}:\n${g.items.join(", ")}`).join("\n\n");
 }
 
-function strToRecord(str: string): Record<string, string[]> {
-  const rec: Record<string, string[]> = {};
+function strToArray(str: string): SkillGroup[] {
+  const arr: SkillGroup[] = [];
   const blocks = str.split(/\n\n+/);
   for (const block of blocks) {
     if (!block.trim()) continue;
     const lines = block.trim().split("\n");
     if (lines.length === 1) {
-      if (!rec["Other"]) rec["Other"] = [];
-      rec["Other"].push(...lines[0].split(",").map(s => s.trim()).filter(Boolean));
+      const existing = arr.find(a => a.category === "Other");
+      const items = lines[0].split(",").map(s => s.trim()).filter(Boolean);
+      if (existing) existing.items.push(...items);
+      else arr.push({ category: "Other", items });
     } else {
       let cat = lines[0].replace(/:$/, "").trim();
       if (!cat) cat = "Other";
       const items = lines.slice(1).join(" ").split(",").map(s => s.trim()).filter(Boolean);
-      if (!rec[cat]) rec[cat] = [];
-      rec[cat].push(...items);
+      const existing = arr.find(a => a.category === cat);
+      if (existing) existing.items.push(...items);
+      else arr.push({ category: cat, items });
     }
   }
-  return rec;
+  return arr;
 }
 
 export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, onSave, onCancel }: Props) {
@@ -198,11 +203,11 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
           <h3 className="font-semibold text-lg text-slate-100 border-b pb-2">Skills</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-white/5/50 border border-white/5 rounded-xl text-slate-400 text-sm leading-relaxed shadow-inner">
-              <p className="whitespace-pre-wrap">{originalResume?.skills ? recordToStr(originalResume.skills as any) : "No skills provided."}</p>
+              <p className="whitespace-pre-wrap">{originalResume?.skills ? arrayToStr(originalResume.skills as any) : "No skills provided."}</p>
             </div>
             
             <div className="relative group">
-              {originalResume?.skills && recordToStr(originalResume.skills as any) !== recordToStr(edited.skills as any) && viewMode === "edit" && (
+              {originalResume?.skills && arrayToStr(originalResume.skills as any) !== arrayToStr(edited.skills as any) && viewMode === "edit" && (
                 <div className="absolute -top-3 right-3 flex items-center gap-2 z-10">
                   <button 
                     onClick={revertSkills}
@@ -218,18 +223,18 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
               )}
               {viewMode === "diff" ? (
                 <div className="w-full text-sm leading-relaxed p-4 rounded-xl border border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20">
-                  <DiffViewer original={originalResume?.skills ? recordToStr(originalResume.skills as any) : ""} modified={recordToStr(edited.skills as any)} />
+                  <DiffViewer original={originalResume?.skills ? arrayToStr(originalResume.skills as any) : ""} modified={arrayToStr(edited.skills as any)} />
                 </div>
               ) : (
                 <TextareaAutosize
                   minRows={3}
                   className={`input w-full text-sm leading-relaxed p-4 rounded-xl resize-none transition-shadow ${
-                    originalResume?.skills && recordToStr(originalResume.skills as any) !== recordToStr(edited.skills as any)
+                    originalResume?.skills && arrayToStr(originalResume.skills as any) !== arrayToStr(edited.skills as any)
                       ? "border-brand-500/30 bg-dark-800/50 ring-4 ring-brand-500/20 focus:border-brand focus:ring-brand/20"
                       : "bg-dark-800/50"
                   }`}
-                  value={recordToStr(edited.skills as any)}
-                  onChange={(e) => setEdited({ ...edited, skills: strToRecord(e.target.value) })}
+                  value={arrayToStr(edited.skills as any)}
+                  onChange={(e) => setEdited({ ...edited, skills: strToArray(e.target.value) as any })}
                   placeholder="Programming:\nPython, TypeScript"
                 />
               )}

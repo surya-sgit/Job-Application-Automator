@@ -139,8 +139,30 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 // `userId` is ignored in file-fallback (single-user, no-DB) mode.
 
 function migrateSkills(obj: any) {
-  if (obj && obj.skills && Array.isArray(obj.skills)) {
-    const newSkills: Record<string, string[]> = {};
+  if (!obj || !obj.skills) return;
+
+  // Case 1: Already an array of objects? Do nothing if valid.
+  if (Array.isArray(obj.skills) && obj.skills.every((s: any) => typeof s === "object" && s !== null && !Array.isArray(s))) {
+    if (obj.skills.length === 0 || (obj.skills[0].category !== undefined && Array.isArray(obj.skills[0].items))) {
+      return;
+    }
+  }
+
+  // Case 2: Dictionary (Record)
+  if (typeof obj.skills === "object" && !Array.isArray(obj.skills)) {
+    const newArr: { category: string, items: string[] }[] = [];
+    for (const [cat, items] of Object.entries(obj.skills)) {
+      if (Array.isArray(items)) {
+        newArr.push({ category: cat, items: items as string[] });
+      }
+    }
+    obj.skills = newArr;
+    return;
+  }
+
+  // Case 3: Flat Array of Strings
+  if (Array.isArray(obj.skills)) {
+    const newArr: { category: string, items: string[] }[] = [];
     const ungrouped: string[] = [];
     
     for (const s of obj.skills) {
@@ -148,26 +170,29 @@ function migrateSkills(obj: any) {
       if (s.includes(":")) {
         const parts = s.split(":");
         let cat = parts[0].trim();
-        // Remove markdown bolding if it was saved that way
         cat = cat.replace(/\*\*/g, "");
         const val = parts.slice(1).join(":").trim();
-        if (!newSkills[cat]) newSkills[cat] = [];
-        newSkills[cat].push(...val.split(",").map(v => v.trim()).filter(Boolean));
+        const existing = newArr.find(a => a.category === cat);
+        if (existing) {
+          existing.items.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+        } else {
+          newArr.push({ category: cat, items: val.split(",").map(v => v.trim()).filter(Boolean) });
+        }
       } else {
         ungrouped.push(s.trim());
       }
     }
+    
     if (ungrouped.length > 0) {
-      newSkills["Other"] = ungrouped;
+      newArr.push({ category: "Other", items: ungrouped });
     }
     
-    // Fallback if absolutely nothing could be parsed
-    if (Object.keys(newSkills).length === 0 && obj.skills.length > 0) {
+    if (newArr.length === 0 && obj.skills.length > 0) {
       const flat = obj.skills.filter((s: any) => typeof s === "string");
-      if (flat.length > 0) newSkills["Imported Skills"] = flat;
+      if (flat.length > 0) newArr.push({ category: "Imported Skills", items: flat });
     }
     
-    obj.skills = newSkills;
+    obj.skills = newArr;
   }
 }
 
