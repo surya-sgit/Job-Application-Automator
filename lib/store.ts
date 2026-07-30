@@ -140,8 +140,34 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 
 function migrateSkills(obj: any) {
   if (obj && obj.skills && Array.isArray(obj.skills)) {
-    const flat = obj.skills.filter((s: any) => typeof s === "string");
-    obj.skills = flat.length > 0 ? { "Imported Skills": flat } : {};
+    const newSkills: Record<string, string[]> = {};
+    const ungrouped: string[] = [];
+    
+    for (const s of obj.skills) {
+      if (typeof s !== "string") continue;
+      if (s.includes(":")) {
+        const parts = s.split(":");
+        let cat = parts[0].trim();
+        // Remove markdown bolding if it was saved that way
+        cat = cat.replace(/\*\*/g, "");
+        const val = parts.slice(1).join(":").trim();
+        if (!newSkills[cat]) newSkills[cat] = [];
+        newSkills[cat].push(...val.split(",").map(v => v.trim()).filter(Boolean));
+      } else {
+        ungrouped.push(s.trim());
+      }
+    }
+    if (ungrouped.length > 0) {
+      newSkills["Other"] = ungrouped;
+    }
+    
+    // Fallback if absolutely nothing could be parsed
+    if (Object.keys(newSkills).length === 0 && obj.skills.length > 0) {
+      const flat = obj.skills.filter((s: any) => typeof s === "string");
+      if (flat.length > 0) newSkills["Imported Skills"] = flat;
+    }
+    
+    obj.skills = newSkills;
   }
 }
 
