@@ -161,6 +161,14 @@ export function tailorContext(
     link: p.link,
   }));
 
+  const existingCategories = Array.isArray(profile.skills)
+    ? profile.skills.map((s: any) => s.category).filter(Boolean).join(", ")
+    : "";
+  
+  const categoryRule = existingCategories
+    ? `CRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use these EXACT categories to group the skills. Do NOT invent new categories unless it is absolutely impossible to fit a skill into one of these.`
+    : "";
+
   return [
     `[INPUT PARAMETERS]\nTARGET JOB ANALYSIS:\n${JSON.stringify(analysis)}`,
     `CANDIDATE (relevant subset only):\n${JSON.stringify(compactProfile)}`,
@@ -168,18 +176,7 @@ export function tailorContext(
     answers && Object.keys(answers).length
       ? `USER ANSWERS TO CLARIFYING QUESTIONS:\n${JSON.stringify(answers)}`
       : "",
-    `[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
-{
-  "name": string,
-  "title": string,
-  "contact": { "email": string, "phone": string, "location": string, "links": string[] },
-  "summary": string,
-  "skills": string[],
-  "certifications": string[],
-  "achievements": string[],
-  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
-  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }]
-}`,
+    categoryRule,
     "Produce the tailored resume now.",
   ]
     .filter(Boolean)
