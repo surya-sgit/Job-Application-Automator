@@ -46,8 +46,8 @@ Extract structured profile data from a raw resume/CV text.
 [FALLBACK]
 - If a requested field is absent in the text, leave it empty or null. Do not hallucinate data.`;
 
-export function resumeParseUser(text: string): string {
-  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>\n\n[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
+export const PARSE_OUTPUT_SCHEMA = `[OUTPUT SCHEMA]
+You MUST return a JSON object strictly matching this exact schema:
 {
   "name": string,
   "title": string,
@@ -56,13 +56,16 @@ export function resumeParseUser(text: string): string {
   "location": string,
   "links": string[],
   "summary": string,
-  "skills": { [category: string]: string[] }, // Dictionary mapping categories to lists of skills
+  "skills": [{ "category": string, "items": string[] }],
   "certifications": string[],
   "achievements": string[],
   "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }],
   "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
   "education": [{ "school": string, "degree": string, "year": string, "details": string }]
 }`;
+
+export function resumeParseUser(text: string): string {
+  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>\n\n${PARSE_OUTPUT_SCHEMA}`;
 }
 
 export const QUESTIONS_SYSTEM = `[TASK]
@@ -102,6 +105,20 @@ export function questionsContext(
     "Generate the clarifying questions now."
   ].join("\n\n");
 }
+
+export const TAILOR_OUTPUT_SCHEMA = `[OUTPUT SCHEMA]
+You MUST return a JSON object strictly matching this exact schema:
+{
+  "name": string,
+  "title": string,
+  "contact": { "email": string, "phone": string, "location": string, "links": string[] },
+  "summary": string,
+  "skills": [{ "category": string, "items": string[] }],
+  "certifications": string[],
+  "achievements": string[],
+  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
+  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }]
+}`;
 
 export const TAILOR_SYSTEM = `[TASK]
 Rewrite the candidate's material into a tailored resume optimized for the target job description.
@@ -177,6 +194,7 @@ export function tailorContext(
       ? `USER ANSWERS TO CLARIFYING QUESTIONS:\n${JSON.stringify(answers)}`
       : "",
     categoryRule,
+    TAILOR_OUTPUT_SCHEMA,
     "Produce the tailored resume now.",
   ]
     .filter(Boolean)
@@ -243,6 +261,7 @@ export function tweakContext(
     answers && Object.keys(answers).length
       ? `USER NOTES FOR TWEAKING:\n${JSON.stringify(answers)}`
       : "",
+    TAILOR_OUTPUT_SCHEMA,
     "Produce the tweaked resume now. Make minimal changes.",
   ]
     .filter(Boolean)
@@ -327,17 +346,6 @@ export function editorContext(draftResume: any, critiques: any): string {
   return [
     `[INPUT PARAMETERS]\nDRAFT RESUME:\n${JSON.stringify(draftResume)}`,
     `CRITIQUES TO FIX:\n${JSON.stringify(critiques)}`,
-    `[OUTPUT SCHEMA]\nYou MUST return a JSON object strictly matching this exact schema:
-{
-  "name": string,
-  "title": string,
-  "contact": { "email": string, "phone": string, "location": string, "links": string[] },
-  "summary": string,
-  "skills": string[],
-  "certifications": string[],
-  "achievements": string[],
-  "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
-  "projects": [{ "title": string, "description": string, "link": string, "stack": string[], "bullets": string[] }]
-}`
+    TAILOR_OUTPUT_SCHEMA
   ].join("\n\n");
 }
