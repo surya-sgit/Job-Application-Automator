@@ -64,8 +64,12 @@ You MUST return a JSON object strictly matching this exact schema:
   "education": [{ "school": string, "degree": string, "year": string, "details": string }]
 }`;
 
-export function resumeParseUser(text: string): string {
-  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>\n\n${PARSE_OUTPUT_SCHEMA}`;
+export function resumeParseUser(text: string, existingCategories?: string): string {
+  const categoryRule = existingCategories
+    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use these EXACT categories to group the skills. Do NOT invent new categories unless it is absolutely impossible to fit a skill into one of these.`
+    : `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool.`;
+
+  return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>${categoryRule}\n\n${PARSE_OUTPUT_SCHEMA}`;
 }
 
 export const QUESTIONS_SYSTEM = `[TASK]

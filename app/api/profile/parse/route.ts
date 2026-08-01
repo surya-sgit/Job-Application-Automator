@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getModel, MissingKeyError, describeConfig, safeGenerateObject } from "@/lib/ai";
 import { randomUUID } from "crypto";
-import { readSecrets, checkRateLimit } from "@/lib/store";
+import { readSecrets, checkRateLimit, readProfile } from "@/lib/store";
 import { requireUserId, UnauthorizedError } from "@/lib/session";
 import { ParsedProfileSchema, ProfileSchema } from "@/lib/resumeSchema";
 import { RESUME_PARSE_SYSTEM, resumeParseUser } from "@/lib/prompts";
@@ -56,12 +56,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const existingProfile = await readProfile(userId);
+    const existingCategories = Array.isArray(existingProfile?.skills)
+      ? existingProfile.skills.map((s: any) => s.category).filter(Boolean).join(", ")
+      : "";
+
     const secrets = await readSecrets(userId);
     const { object, usage } = await safeGenerateObject({
       model: await getModel({ cheap: false, secrets }),
       schema: ParsedProfileSchema,
       system: RESUME_PARSE_SYSTEM,
-      prompt: resumeParseUser(text),
+      prompt: resumeParseUser(text, existingCategories),
     });
     console.log(`[profile/parse] ${describeConfig(secrets)} tokens=`, usage);
 
