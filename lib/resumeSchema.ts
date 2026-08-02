@@ -128,6 +128,7 @@ export const TailoredResumeSchema = z.object({
     category: z.string(),
     items: z.array(z.string())
   })).default([]).describe("Array of skill categories, e.g. [{ category: 'Languages', items: ['Python'] }]"),
+  suggestedSkills: z.array(z.string()).default([]).describe("Skills relevant to the JD that do NOT fit into any of the predefined user categories."),
   certifications: z.array(z.string()).default([]),
   achievements: z.array(z.string()).default([]),
   experience: z

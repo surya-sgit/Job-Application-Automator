@@ -792,9 +792,20 @@ export default function TailorApp() {
             draftResume={draftResume}
           jdAnalysis={analysis}
           originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
-          onSave={async (edited) => {
+          onSave={async (edited, syncSkills) => {
             setResume(edited);
             setStep("resume");
+            
+            if (syncSkills && rawProfile) {
+              try {
+                const updatedProfile = { ...rawProfile, skills: edited.skills };
+                await post("/api/profile", updatedProfile);
+                setRawProfile(updatedProfile);
+              } catch (err) {
+                console.error("Failed to sync skills to profile", err);
+              }
+            }
+
             // Auto-save the first resume so the user has a baseline for future tweaks
             if (savedResumes.length === 0) {
               try {

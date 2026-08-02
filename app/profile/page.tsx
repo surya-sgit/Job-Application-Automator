@@ -424,6 +424,9 @@ export default function ProfilePage() {
         </div>
         <div>
           <label className="label">Skills (grouped by category)</label>
+          <p className="text-xs text-muted-foreground mb-2">
+            This is your single source of truth for skill categories. The AI will never invent new categories when tailoring your resume, it will only use these exact categories.
+          </p>
           <textarea
             className="input min-h-[120px]"
             value={arrayToStr(p.skills as any)}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { TailoredResume, ParsedProfile } from "@/lib/resumeSchema";
 import TextareaAutosize from "react-textarea-autosize";
-import { Lock, Sparkles, Undo2, ChevronDown, ChevronUp, Eye, Edit2 } from "lucide-react";
+import { Lock, Sparkles, Undo2, ChevronDown, ChevronUp, Eye, Edit2, X } from "lucide-react";
 import DiffViewer from "./DiffViewer";
 import QualityReport from "./QualityReport";
 import type { JdAnalysis } from "@/lib/resumeSchema";
@@ -12,7 +12,7 @@ interface Props {
   draftResume: TailoredResume;
   jdAnalysis: JdAnalysis | null;
   originalResume: TailoredResume | ParsedProfile | null;
-  onSave: (edited: TailoredResume) => void;
+  onSave: (edited: TailoredResume, syncSkills?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -48,6 +48,7 @@ function strToArray(str: string): SkillGroup[] {
 export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, onSave, onCancel }: Props) {
   const [edited, setEdited] = useState<TailoredResume>(JSON.parse(JSON.stringify(draftResume)));
   const [viewMode, setViewMode] = useState<"diff" | "edit">("diff");
+  const [syncSkills, setSyncSkills] = useState(true);
   
   // Accordion state
   const [expandedRoles, setExpandedRoles] = useState<Set<number>>(new Set(edited.experience.map((_, i) => i)));
@@ -96,6 +97,28 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
     const newExp = [...edited.experience];
     newExp[expIndex].bullets[bIndex] = originalBullet;
     setEdited({ ...edited, experience: newExp });
+  };
+
+  const handleAcceptSuggestion = (skill: string, category: string) => {
+    const newSkills = [...(edited.skills || [])];
+    const catObj = newSkills.find(s => s.category === category);
+    if (catObj) {
+      if (!catObj.items.includes(skill)) catObj.items.push(skill);
+    } else {
+      newSkills.push({ category, items: [skill] });
+    }
+    setEdited({
+      ...edited,
+      skills: newSkills,
+      suggestedSkills: (edited.suggestedSkills || []).filter(s => s !== skill)
+    });
+  };
+
+  const handleDismissSuggestion = (skill: string) => {
+    setEdited({
+      ...edited,
+      suggestedSkills: (edited.suggestedSkills || []).filter(s => s !== skill)
+    });
   };
 
   const revertProjBullet = (projIndex: number, bIndex: number, originalBullet: string) => {
@@ -201,6 +224,41 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
         {/* Skills */}
         <div className="space-y-4 pt-4">
           <h3 className="font-semibold text-lg text-slate-100 border-b pb-2">Skills</h3>
+          
+          {/* Suggested Skills Banner */}
+          {edited.suggestedSkills && edited.suggestedSkills.length > 0 && (
+            <div className="bg-brand-500/10 border border-brand/30 rounded-xl p-4 space-y-3 mb-4">
+              <h4 className="font-medium text-brand">Suggested Skills from Job Description</h4>
+              <p className="text-sm text-slate-300">
+                The following skills were found in the JD but didn't match your existing categories. Map them to a category to include them in your resume.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {edited.suggestedSkills.map(skill => (
+                  <div key={skill} className="flex items-center gap-2 bg-dark-800/80 px-3 py-1.5 rounded-lg border border-white/5">
+                    <span className="text-sm font-medium">{skill}</span>
+                    <select 
+                      className="text-xs bg-dark text-slate-300 border border-white/10 rounded px-2 py-1 outline-none"
+                      onChange={(e) => {
+                        if (e.target.value) handleAcceptSuggestion(skill, e.target.value);
+                        e.target.value = "";
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Add to...</option>
+                      {(edited.skills || []).map(c => (
+                        <option key={c.category} value={c.category}>{c.category}</option>
+                      ))}
+                      <option value="Other">New "Other" Category</option>
+                    </select>
+                    <button onClick={() => handleDismissSuggestion(skill)} className="text-slate-500 hover:text-red-400">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-white/5/50 border border-white/5 rounded-xl text-slate-400 text-sm leading-relaxed shadow-inner">
               <p className="whitespace-pre-wrap">{originalResume?.skills ? arrayToStr(originalResume.skills as any) : "No skills provided."}</p>
@@ -419,14 +477,18 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-dark-800/50/80 backdrop-blur-md border-t border-white/10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-50">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="text-sm font-medium text-slate-400 hidden md:block">
-            Take a moment to review the changes. You can revert any hallucinated bullets!
+          <div className="text-sm font-medium text-slate-400 hidden md:flex items-center gap-4">
+            <span>Take a moment to review the changes. You can revert any hallucinated bullets!</span>
+            <label className="flex items-center gap-2 cursor-pointer bg-dark-800/50 px-3 py-1.5 rounded border border-white/5">
+              <input type="checkbox" checked={syncSkills} onChange={(e) => setSyncSkills(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" />
+              <span className="text-xs">Sync mapped skills to global profile</span>
+            </label>
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto justify-end">
             <button className="btn-ghost" onClick={onCancel}>
               Cancel
             </button>
-            <button className="btn-primary shadow-lg shadow-brand/30 px-8 py-2.5 font-semibold" onClick={() => onSave(edited)}>
+            <button className="btn-primary shadow-lg shadow-brand/30 px-8 py-2.5 font-semibold" onClick={() => onSave(edited, syncSkills)}>
               Approve & Finalize PDF →
             </button>
           </div>

@@ -78,9 +78,13 @@ export async function POST(req: NextRequest) {
     }
 
     // action === "generate"
+    const existingCategories = Array.isArray(profile.skills)
+      ? profile.skills.map((s: any) => s.category).filter(Boolean).join(", ")
+      : "";
+
     if (parsed.data.mode === "tweak" && parsed.data.baseResume) {
       // Tweak mode: minor edits to an existing resume
-      const context = tweakContext(analysis, parsed.data.baseResume, answers);
+      const context = tweakContext(analysis, parsed.data.baseResume, answers, existingCategories);
       const { object, usage } = await safeGenerateObject({
         model: await getModel({ secrets }),
         schema: TailoredResumeSchema,
@@ -124,7 +128,7 @@ export async function POST(req: NextRequest) {
         });
 
         console.log(`[tailor:generate:critic] found ${critiqueObj.critiques.length} issues, running editor...`);
-        const eContext = editorContext(draftResume, critiqueObj.critiques);
+        const eContext = editorContext(draftResume, critiqueObj.critiques, existingCategories);
         const { object: finalResume, usage: editorUsage } = await safeGenerateObject({
           model: await getModel({ secrets }),
           schema: TailoredResumeSchema,

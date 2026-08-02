@@ -66,7 +66,7 @@ You MUST return a JSON object strictly matching this exact schema:
 
 export function resumeParseUser(text: string, existingCategories?: string): string {
   const categoryRule = existingCategories
-    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use these EXACT categories to group the skills. Do NOT invent new categories unless it is absolutely impossible to fit a skill into one of these.`
+    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use ONLY these EXACT categories for the "skills" field. Do NOT invent new categories under any circumstance. If a relevant skill from the JD does not fit into any of these existing categories, add it to the "suggestedSkills" array instead.`
     : `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool.`;
 
   return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>${categoryRule}\n\n${PARSE_OUTPUT_SCHEMA}`;
@@ -118,6 +118,7 @@ You MUST return a JSON object strictly matching this exact schema:
   "contact": { "email": string, "phone": string, "location": string, "links": string[] },
   "summary": string,
   "skills": [{ "category": string, "items": string[] }],
+  "suggestedSkills": string[],
   "certifications": string[],
   "achievements": string[],
   "experience": [{ "company": string, "title": string, "location": string, "start": string, "end": string, "bullets": string[] }],
@@ -248,7 +249,6 @@ Make minimal changes to adapt an EXISTING tailored resume to a NEW job descripti
 - HALLUCINATIONS: STRICT PROHIBITION. Do NOT add fabricated skills, tools, or responsibilities.
 - RETENTION: Keep ALL bullet points. Do NOT drop, shorten, or remove any sections, employers, or entries.
 - BOLDING: Use markdown to **bold** strictly 1-3 single nouns (technical skills, tools, or specific metrics) per bullet. NEVER bold verbs, action phrases, or entire sentences. Correct: "using **Redis** to improve speed by **40%**". Incorrect: "**using Redis to improve speed**".
-- SKILLS FORMATTING: Organize skills into logical categories. The category name MUST NOT be bolded or use any markdown. Format each category as a single string: "Category Name: Skill 1, Skill 2"
 - NEVER wrap your output in markdown code blocks. Return ONLY raw JSON.
 
 [FALLBACK]
@@ -257,14 +257,20 @@ Make minimal changes to adapt an EXISTING tailored resume to a NEW job descripti
 export function tweakContext(
   analysis: JdAnalysis,
   baseResume: any,
-  answers?: Record<string, string>
+  answers?: Record<string, string>,
+  existingCategories?: string
 ): string {
+  const categoryRule = existingCategories
+    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use ONLY these EXACT categories for the "skills" field. Do NOT invent new categories under any circumstance. If a relevant skill from the JD does not fit into any of these existing categories, add it to the "suggestedSkills" array instead.`
+    : `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool.`;
+
   return [
     `[INPUT PARAMETERS]\nNEW TARGET JOB ANALYSIS:\n${JSON.stringify(analysis)}`,
     `EXISTING RESUME TO TWEAK:\n${JSON.stringify(baseResume)}`,
     answers && Object.keys(answers).length
       ? `USER NOTES FOR TWEAKING:\n${JSON.stringify(answers)}`
       : "",
+    categoryRule,
     TAILOR_OUTPUT_SCHEMA,
     "Produce the tweaked resume now. Make minimal changes.",
   ]
@@ -346,10 +352,15 @@ Rewrite the Draft Resume by fixing ONLY the specific issues mentioned in the Cri
 [FALLBACK]
 - If a critique asks for metrics but none exist, rewrite the bullet to be as strong as possible without lying or fabricating numbers.`;
 
-export function editorContext(draftResume: any, critiques: any): string {
+export function editorContext(draftResume: any, critiques: any, existingCategories?: string): string {
+  const categoryRule = existingCategories
+    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use ONLY these EXACT categories for the "skills" field. Do NOT invent new categories under any circumstance. If a relevant skill from the JD does not fit into any of these existing categories, add it to the "suggestedSkills" array instead.`
+    : `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool.`;
+
   return [
     `[INPUT PARAMETERS]\nDRAFT RESUME:\n${JSON.stringify(draftResume)}`,
     `CRITIQUES TO FIX:\n${JSON.stringify(critiques)}`,
+    categoryRule,
     TAILOR_OUTPUT_SCHEMA
   ].join("\n\n");
 }
