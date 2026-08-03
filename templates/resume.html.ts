@@ -70,7 +70,7 @@ function parseSkills(skillsArray: { category: string, items: string[] }[] | unde
   for (const group of skillsArray) {
     if (group.items && group.items.length > 0) {
       const cleanCat = group.category.replace(/\*\*/g, "").trim();
-      html += `            <p><strong>${esc(cleanCat)}</strong> ${esc(group.items.join(", "))}</p>\n`;
+      html += `            <p><strong>${esc(cleanCat)}:</strong> ${esc(group.items.join(", "))}</p>\n`;
     }
   }
   return html;
