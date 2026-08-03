@@ -47,7 +47,8 @@ Extract structured profile data from a raw resume/CV text.
 - If a requested field is absent in the text, leave it empty or null. Do not hallucinate data.`;
 
 export const PARSE_OUTPUT_SCHEMA = `[OUTPUT SCHEMA]
-You MUST return a JSON object strictly matching this exact schema:
+You MUST return a JSON object strictly matching this exact schema. 
+CRITICAL: Do NOT nest the output under a 'profile' key. Use the exact lowercase keys shown below:
 {
   "name": string,
   "title": string,
@@ -66,7 +67,7 @@ You MUST return a JSON object strictly matching this exact schema:
 
 export function resumeParseUser(text: string, existingCategories?: string): string {
   const categoryRule = existingCategories
-    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use ONLY these EXACT categories for the "skills" field. Do NOT invent new categories under any circumstance. If a relevant skill from the JD does not fit into any of these existing categories, add it to the "suggestedSkills" array instead.`
+    ? `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: The candidate has pre-defined the following skill categories: [${existingCategories}]. You MUST use ONLY these EXACT categories for the "skills" field. Do NOT invent new categories under any circumstance. If a relevant skill does not fit into any of these existing categories, add it to the "suggestedSkills" array instead.`
     : `\n\nCRITICAL RULE FOR SKILLS CATEGORIES: Limit skills to a maximum of 3 to 5 broad categories (e.g. 'Languages', 'Frameworks', 'Tools'). Do NOT create hyper-specific categories for every tool.`;
 
   return `[INPUT PARAMETERS]\nResume text:\n<RESUME_TEXT>\n${text.slice(0, 10000)}\n</RESUME_TEXT>${categoryRule}\n\n${PARSE_OUTPUT_SCHEMA}`;

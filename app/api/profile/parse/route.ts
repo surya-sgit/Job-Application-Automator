@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       schema: ParsedProfileSchema,
       system: RESUME_PARSE_SYSTEM,
       prompt: resumeParseUser(text, existingCategories),
+      maxTokens: 4000,
     });
     console.log(`[profile/parse] ${describeConfig(secrets)} tokens=`, usage);
 
