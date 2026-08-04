@@ -107,51 +107,91 @@ function mergeProfile(
   parsed: Profile,
   replaceBasics: boolean
 ): { profile: Profile; summary: MergeSummary } {
-  const pick = (a: string, b: string) => (replaceBasics ? b || a : a || b);
-
+  let summary = { projects: 0, experience: 0, education: 0 };
+  
   const newProjects = parsed.projects.filter(
     (np) => !existing.projects.some((ep) => norm(ep.title) === norm(np.title))
   );
-  const newExperience = parsed.experience.filter(
-    (ne) =>
-      !existing.experience.some(
-        (ee) => norm(ee.company) === norm(ne.company) && norm(ee.title) === norm(ne.title)
-      )
+  summary.projects = newProjects.length;
+
+  const newExp = parsed.experience.filter(
+    (ne) => !existing.experience.some((ee) => norm(ee.company) === norm(ne.company) && norm(ee.title) === norm(ne.title))
   );
-  const newEducation = parsed.education.filter(
-    (nd) =>
-      !existing.education.some(
-        (ed) => norm(ed.school) === norm(nd.school) && norm(ed.degree) === norm(nd.degree)
-      )
+  summary.experience = newExp.length;
+
+  const newEdu = parsed.education.filter(
+    (ne) => !existing.education.some((ee) => norm(ee.school) === norm(ne.school) && norm(ee.degree) === norm(ne.degree))
   );
+  summary.education = newEdu.length;
 
   return {
     profile: {
-      name: pick(existing.name, parsed.name),
-      title: pick(existing.title, parsed.title),
-      email: pick(existing.email, parsed.email),
-      phone: pick(existing.phone, parsed.phone),
-      location: pick(existing.location, parsed.location),
-      summary: pick(existing.summary, parsed.summary),
-      links: dedupeStrings([...existing.links, ...parsed.links]),
+      ...existing,
+      ...(replaceBasics ? {
+        name: parsed.name || existing.name,
+        title: parsed.title || existing.title,
+        email: parsed.email || existing.email,
+        phone: parsed.phone || existing.phone,
+        location: parsed.location || existing.location,
+        links: dedupeStrings([...existing.links, ...parsed.links]),
+        summary: parsed.summary || existing.summary,
+      } : {}),
       skills: mergeArrays(existing.skills as any, parsed.skills as any),
       certifications: dedupeStrings([...existing.certifications, ...parsed.certifications]),
       achievements: dedupeStrings([...existing.achievements, ...parsed.achievements]),
       projects: [...existing.projects, ...newProjects],
-      experience: [...existing.experience, ...newExperience],
-      education: [...existing.education, ...newEducation],
-      latexTemplate: pick(existing.latexTemplate, parsed.latexTemplate),
+      experience: [...existing.experience, ...newExp],
+      education: [...existing.education, ...newEdu],
     },
-    summary: {
-      projects: newProjects.length,
-      experience: newExperience.length,
-      education: newEducation.length,
-    },
+    summary
   };
+}
+
+// ---- Components to manage local text state for arrays to prevent cursor jumping ----
+
+function ArrayInput({ value, onChange, placeholder }: { value: string[], onChange: (val: string[]) => void, placeholder: string }) {
+  const [local, setLocal] = useState(value.join(", "));
+  useEffect(() => {
+    if (value.join(", ") !== local.split(/[\n,]/).map(x => x.trim()).filter(Boolean).join(", ")) {
+      setLocal(value.join(", "));
+    }
+  }, [value]);
+  return <input className="input" placeholder={placeholder} value={local} onChange={(e) => {
+    setLocal(e.target.value);
+    onChange(e.target.value.split(/[\n,]/).map(x => x.trim()).filter(Boolean));
+  }} />;
+}
+
+function ArrayTextarea({ value, onChange, placeholder, minH = "70px" }: { value: string[], onChange: (val: string[]) => void, placeholder: string, minH?: string }) {
+  const [local, setLocal] = useState(value.join("\n"));
+  useEffect(() => {
+    if (value.join("\n") !== local.split("\n").map(x => x.trim()).filter(Boolean).join("\n")) {
+      setLocal(value.join("\n"));
+    }
+  }, [value]);
+  return <textarea className={`input min-h-[${minH}]`} placeholder={placeholder} value={local} onChange={(e) => {
+    setLocal(e.target.value);
+    onChange(e.target.value.split("\n").map(x => x.trim()).filter(Boolean));
+  }} />;
+}
+
+function SkillsTextarea({ value, onChange }: { value: SkillGroup[], onChange: (val: SkillGroup[]) => void }) {
+  const [local, setLocal] = useState(arrayToStr(value));
+  useEffect(() => {
+    const currentParsed = strToArray(local);
+    if (JSON.stringify(value) !== JSON.stringify(currentParsed)) {
+      setLocal(arrayToStr(value));
+    }
+  }, [value]);
+  return <textarea className="input min-h-[120px]" placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"} value={local} onChange={(e) => {
+    setLocal(e.target.value);
+    onChange(strToArray(e.target.value));
+  }} />;
 }
 
 export default function ProfilePage() {
   const [p, setP] = useState<Profile>(EMPTY);
+  const [initialP, setInitialP] = useState<Profile>(EMPTY);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -171,6 +211,7 @@ export default function ProfilePage() {
     fetchJson<Profile>("/api/profile")
       .then((data) => {
         setP({ ...EMPTY, ...data });
+        setInitialP({ ...EMPTY, ...data });
         setLoaded(true);
       })
       .catch((e: Error) => setLoadError(e.message));
@@ -186,7 +227,6 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg("Checking for changes to projects...");
     try {
-      // Lazy load embeddings client to avoid blocking initial render
       const { getEmbedding, hashText } = await import("@/lib/embeddingsClient");
       
       const newProjects = [...p.projects];
@@ -211,7 +251,12 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(toSave),
       });
-      setMsg(res.ok ? "Profile saved." : "Failed to save.");
+      if (res.ok) {
+        setMsg("Profile saved.");
+        setInitialP(toSave);
+      } else {
+        setMsg("Failed to save.");
+      }
     } catch(err) {
       console.error(err);
       setMsg("Failed to save: " + String(err));
@@ -406,11 +451,10 @@ export default function ProfilePage() {
           </div>
           <div>
             <label className="label">Links (comma separated)</label>
-            <input
-              className="input"
-              value={p.links.join(", ")}
-              onChange={(e) => set("links", toList(e.target.value))}
+            <ArrayInput
               placeholder="github.com/you, linkedin.com/in/you"
+              value={p.links}
+              onChange={(val) => set("links", val)}
             />
           </div>
         </div>
@@ -427,11 +471,9 @@ export default function ProfilePage() {
           <p className="text-xs text-muted-foreground mb-2">
             This is your single source of truth for skill categories. The AI will never invent new categories when tailoring your resume, it will only use these exact categories.
           </p>
-          <textarea
-            className="input min-h-[120px]"
-            value={arrayToStr(p.skills as any)}
-            onChange={(e) => set("skills", strToArray(e.target.value))}
-            placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"}
+          <SkillsTextarea
+            value={p.skills as any}
+            onChange={(val) => set("skills", val)}
           />
         </div>
       </div>
@@ -463,11 +505,10 @@ export default function ProfilePage() {
                 onChange={(e) => updateProject(proj.id, { role: e.target.value })}
               />
             </div>
-            <input
-              className="input"
+            <ArrayInput
               placeholder="Tech stack (comma separated)"
-              value={proj.stack.join(", ")}
-              onChange={(e) => updateProject(proj.id, { stack: toList(e.target.value) })}
+              value={proj.stack}
+              onChange={(val) => updateProject(proj.id, { stack: val })}
             />
             <textarea
               className="input min-h-[50px]"
@@ -475,15 +516,10 @@ export default function ProfilePage() {
               value={proj.description}
               onChange={(e) => updateProject(proj.id, { description: e.target.value })}
             />
-            <textarea
-              className="input min-h-[70px]"
+            <ArrayTextarea
               placeholder="Bullet points (one per line)"
-              value={proj.bullets.join("\n")}
-              onChange={(e) =>
-                updateProject(proj.id, {
-                  bullets: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean),
-                })
-              }
+              value={proj.bullets}
+              onChange={(val) => updateProject(proj.id, { bullets: val })}
             />
             <div className="flex items-center gap-3">
               <input
@@ -539,15 +575,10 @@ export default function ProfilePage() {
                 onChange={(e) => updateExp(exp.id, { end: e.target.value })}
               />
             </div>
-            <textarea
-              className="input min-h-[70px]"
+            <ArrayTextarea
               placeholder="Bullet points (one per line)"
-              value={exp.bullets.join("\n")}
-              onChange={(e) =>
-                updateExp(exp.id, {
-                  bullets: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean),
-                })
-              }
+              value={exp.bullets}
+              onChange={(val) => updateExp(exp.id, { bullets: val })}
             />
             <button className="btn-ghost text-red-600" onClick={() => removeExp(exp.id)}>
               Remove
@@ -599,78 +630,26 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Certifications */}
       <div className="card space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Certifications ({p.certifications.length})</h2>
-          <button
-            className="btn-ghost"
-            onClick={() => set("certifications", [...p.certifications, ""])}
-          >
-            + Add certification
-          </button>
+          <h2 className="font-semibold">Certifications</h2>
         </div>
-        {p.certifications.map((cert, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              className="input flex-1"
-              placeholder="Certification title (e.g. AWS Certified Solutions Architect)"
-              value={cert}
-              onChange={(e) => {
-                const arr = [...p.certifications];
-                arr[i] = e.target.value;
-                set("certifications", arr);
-              }}
-            />
-            <button
-              className="btn-ghost text-red-600"
-              onClick={() => {
-                const arr = [...p.certifications];
-                arr.splice(i, 1);
-                set("certifications", arr);
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+        <ArrayTextarea
+          placeholder="Certifications (one per line)"
+          value={p.certifications}
+          onChange={(val) => set("certifications", val)}
+        />
       </div>
 
-      {/* Achievements */}
       <div className="card space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Achievements ({p.achievements.length})</h2>
-          <button
-            className="btn-ghost"
-            onClick={() => set("achievements", [...p.achievements, ""])}
-          >
-            + Add achievement
-          </button>
+          <h2 className="font-semibold">Achievements</h2>
         </div>
-        {p.achievements.map((ach, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              className="input flex-1"
-              placeholder="Achievement (e.g. 1st Place at National Hackathon)"
-              value={ach}
-              onChange={(e) => {
-                const arr = [...p.achievements];
-                arr[i] = e.target.value;
-                set("achievements", arr);
-              }}
-            />
-            <button
-              className="btn-ghost text-red-600"
-              onClick={() => {
-                const arr = [...p.achievements];
-                arr.splice(i, 1);
-                set("achievements", arr);
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+        <ArrayTextarea
+          placeholder="Achievements (one per line)"
+          value={p.achievements}
+          onChange={(val) => set("achievements", val)}
+        />
       </div>
 
       {/* LaTeX Template */}
@@ -691,7 +670,11 @@ export default function ProfilePage() {
 
       <div className="sticky bottom-8 mt-12 flex justify-center w-full z-10 pointer-events-none">
         <div className="flex flex-col items-center gap-3 pointer-events-auto">
-          <button className="btn-primary rounded-full px-10 shadow-[0_0_30px_rgba(139,92,246,0.3)] border-brand-400/50" onClick={save} disabled={saving}>
+          <button 
+            className="btn-primary rounded-full px-10 shadow-[0_0_30px_rgba(139,92,246,0.3)] border-brand-400/50 disabled:opacity-50" 
+            onClick={save} 
+            disabled={saving || JSON.stringify(p) === JSON.stringify(initialP)}
+          >
             {saving ? "Saving…" : "Save profile"}
           </button>
           {msg && <span className="text-sm font-medium text-brand-300 bg-dark-900/80 px-4 py-1 rounded-full border border-brand-500/20 backdrop-blur-md shadow-xl">{msg}</span>}
