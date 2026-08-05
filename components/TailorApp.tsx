@@ -1027,15 +1027,15 @@ export default function TailorApp() {
         )}
       </AnimatePresence>
 
-      {/* Busy Overlay Loader */}
+      {/* Busy Floating Loader */}
       <AnimatePresence>
         {busy && (
           <motion.div
             key="busy"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/80 backdrop-blur-xl"
+            initial={{ opacity: 0, y: 20, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className="fixed bottom-8 left-1/2 z-[100] min-w-[300px] rounded-2xl border border-white/10 bg-dark-900/95 backdrop-blur-xl shadow-2xl"
           >
             <LoadingSpinner message={busy} />
           </motion.div>
