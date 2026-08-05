@@ -496,11 +496,6 @@ export default function TailorApp() {
         </div>
       )}
 
-      {busy && (
-        <div className="flex justify-center p-4">
-          <LoadingSpinner message={busy} />
-        </div>
-      )}
       {error && (
         <div className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-700">{error}</div>
       )}
