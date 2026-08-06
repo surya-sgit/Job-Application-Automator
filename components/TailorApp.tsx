@@ -379,11 +379,10 @@ export default function TailorApp() {
     setResume(saved.resume);
     setLatexOutput("");
     setStep("resume");
-    setShowSaved(false);
-  }
-
   function reset() {
     setStep("input");
+    setJd("");
+    setCompany("");
     setAnalysis(null);
     setMatched([]);
     setProjects([]);
@@ -391,13 +390,18 @@ export default function TailorApp() {
     setApprovedProjects([]);
     setQuestions([]);
     setAnswers({});
+    setDraftResume(null);
     setResume(null);
     setLatexOutput("");
     setSubject("");
     setBody("");
+    setTo("");
+    setSignature("");
     setEmailStage("compose");
     setSendResult("");
     setSaveSuccess("");
+    setTrackSuccess("");
+    setFallbackMsg("");
     setSaveLabel("");
     setSelectedBaseId("");
     setError("");
