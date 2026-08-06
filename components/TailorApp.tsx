@@ -379,6 +379,9 @@ export default function TailorApp() {
     setResume(saved.resume);
     setLatexOutput("");
     setStep("resume");
+    setShowSaved(false);
+  }
+
   function reset() {
     setStep("input");
     setJd("");
