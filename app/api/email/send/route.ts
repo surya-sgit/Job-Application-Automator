@@ -14,6 +14,11 @@ const BodySchema = z.object({
   subject: z.string().min(1),
   body: z.string().min(1),
   resume: TailoredResumeSchema,
+  metadata: z.object({
+    layout: z.array(z.string()),
+    hiddenSections: z.array(z.string()),
+    template: z.string()
+  }).optional(),
   cc: z.string().email().optional(),
 });
 
@@ -30,12 +35,12 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  const { to, subject, body, resume, cc } = parsed.data;
+  const { to, subject, body, resume, metadata, cc } = parsed.data;
 
   try {
     const userId = await requireUserId();
     const secrets = await readSecrets(userId);
-    const pdf = await renderResumePdf(resume);
+    const pdf = await renderResumePdf(resume, metadata);
 
     let transporter;
     const provider = secrets.emailProvider || "gmail";

@@ -119,39 +119,74 @@ function bullets(items: string[]): string {
   );
 }
 
-export function renderResumeHtml(r: TailoredResume, fit: FitVars = FIT_STEPS[0]): string {
-  // --- Experience ---
-  const experience = (r.experience || [])
-    .map(
-      (e) => `
-        <article>
+export function renderResumeHtml(
+  r: TailoredResume,
+  fit: FitVars = FIT_STEPS[0],
+  metadata?: { layout: string[]; hiddenSections: string[] }
+): string {
+  // --- HTML Builders for Each Section ---
+
+  const renderSummary = () => {
+    if (!r.summary) return "";
+    return `    <section>
+        <p class="summary">${esc(r.summary)}</p>
+    </section>`;
+  };
+
+  const renderExperience = () => {
+    if (!r.experience || r.experience.length === 0) return "";
+    const html = r.experience
+      .map((e) => {
+        const titleLine = e.title ? `<h3>${esc(e.title)} <span style="font-weight: 400; margin: 0 4px;">|</span> <span class="company" style="font-weight: 500;">${esc(e.company)}</span></h3>` : `<h3>${esc(e.company)}</h3>`;
+        const metaLine = [e.start, e.end].filter(Boolean).join(" – ") + (e.location ? `, ${e.location}` : "");
+        return `        <article>
             <div class="heading">
-                <h3>${esc(e.title)} <span style="font-weight: 400; margin: 0 4px;">|</span> <span class="company" style="font-weight: 500;">${esc(e.company)}</span></h3>
-                <span>${esc([e.start, e.end].filter(Boolean).join(" – "))}${e.location ? `, ${esc(e.location)}` : ""}</span>
+                ${titleLine}
+                <span>${esc(metaLine)}</span>
             </div>
 ${bullets(e.bullets)}
-        </article>`
-    )
-    .join("\n");
+        </article>`;
+      })
+      .join("\n");
+    return `    <section>
+        <h2>Work Experience</h2>
+${html}
+    </section>`;
+  };
 
-  // --- Projects ---
-  const projects = (r.projects || [])
-    .map((p) => {
-      return `
-        <article>
+  const renderProjects = () => {
+    if (!r.projects || r.projects.length === 0) return "";
+    const html = r.projects
+      .map((p) => {
+        return `        <article>
             <div class="heading">
                 <h3>${esc(p.title)}</h3>
             </div>
 ${bullets(p.bullets)}
         </article>`;
-    })
-    .join("\n");
+      })
+      .join("\n");
+    return `    <section>
+        <h2>Projects</h2>
+${html}
+    </section>`;
+  };
 
-  // --- Education ---
-  const education = (r.education || [])
-    .map(
-      (e) => `
-        <div class="edu">
+  const renderSkills = () => {
+    const skillsHtml = parseSkills(r.skills as any);
+    if (!skillsHtml) return "";
+    return `    <section>
+        <h2>Skills</h2>
+        <div class="skills">
+${skillsHtml}        </div>
+    </section>`;
+  };
+
+  const renderEducation = () => {
+    if (!r.education || r.education.length === 0) return "";
+    const html = r.education
+      .map((e) => {
+        return `        <div class="edu">
             <div>
                 <h3>${esc(e.school)}</h3>
                 ${e.degree ? `<p>${esc(e.degree)}</p>` : ""}
@@ -160,23 +195,62 @@ ${bullets(p.bullets)}
                 ${e.year ? `<span>${esc(e.year)}</span>` : ""}
                 ${e.details ? `<span>${esc(e.details)}</span>` : ""}
             </div>
-        </div>`
-    )
-    .join("\n");
+        </div>`;
+      })
+      .join("\n");
+    return `    <section>
+        <h2>Education</h2>
+${html}
+    </section>`;
+  };
 
-  // --- Skills ---
-  const skillsHtml = parseSkills(r.skills as any);
+  const renderCertifications = () => {
+    if (!r.certifications || r.certifications.length === 0) return "";
+    const html = r.certifications.map((c) => `<li>${esc(c)}</li>`).join("\n");
+    return `    <section>
+        <h2>Certifications</h2>
+        <ul>
+${html}
+        </ul>
+    </section>`;
+  };
 
-  // --- Certifications & Achievements ---
-  const certifications = (r.certifications || [])
-    .map((c) => `<li>${esc(c)}</li>`)
-    .join("\n");
-  
-  const achievements = (r.achievements || [])
-    .map((a) => `<li>${esc(a)}</li>`)
-    .join("\n");
+  const renderAchievements = () => {
+    if (!r.achievements || r.achievements.length === 0) return "";
+    const html = r.achievements.map((a) => `<li>${esc(a)}</li>`).join("\n");
+    return `    <section>
+        <h2>Achievements</h2>
+        <ul>
+${html}
+        </ul>
+    </section>`;
+  };
 
-  // --- Full HTML (user's exact structure & CSS) ---
+  // --- Section Registry ---
+  const SECTION_REGISTRY: Record<string, () => string> = {
+    summary: renderSummary,
+    experience: renderExperience,
+    projects: renderProjects,
+    skills: renderSkills,
+    education: renderEducation,
+    certifications: renderCertifications,
+    achievements: renderAchievements,
+  };
+
+  // --- Layout Processing ---
+  const defaultLayout = ["summary", "experience", "projects", "skills", "education", "certifications", "achievements"];
+  const layout = metadata?.layout || defaultLayout;
+  const hiddenSections = new Set(metadata?.hiddenSections || []);
+
+  const sectionsHtml = layout
+    .filter(section => !hiddenSections.has(section))
+    .map(section => {
+      const renderer = SECTION_REGISTRY[section];
+      return renderer ? renderer() : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -304,36 +378,9 @@ ${bullets(p.bullets)}
         <div class="contact">
             ${contactLine(r)}
         </div>
-${r.summary ? `        <p class="summary">${esc(r.summary)}</p>` : ""}
     </header>
 
-${experience ? `    <section>
-        <h2>Work Experience</h2>
-${experience}
-    </section>` : ""}
-
-${projects ? `    <section>
-        <h2>Projects</h2>
-${projects}
-    </section>` : ""}
-
-${skillsHtml ? `    <section>
-        <h2>Skills</h2>
-        <div class="skills">
-${skillsHtml}        </div>
-    </section>` : ""}
-
-${education ? `    <section>
-        <h2>Education</h2>
-${education}
-    </section>` : ""}
-
-${(certifications || achievements) ? `    <section>
-        <h2>Certifications & Achievements</h2>
-        <ul>
-${certifications ? certifications + (achievements ? '\n' : '') : ''}${achievements}
-        </ul>
-    </section>` : ""}
+${sectionsHtml}
 
 </div>
 

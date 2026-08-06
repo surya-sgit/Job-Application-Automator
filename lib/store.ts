@@ -328,10 +328,17 @@ export function redactSecrets(s: Secrets) {
 
 // ---------- Saved Resumes ----------
 
+export interface ResumeMetadata {
+  layout: string[];
+  hiddenSections: string[];
+  template: string;
+}
+
 export interface SavedResume {
   id: string;
   label: string;
   resume: z.infer<typeof TailoredResumeSchema>;
+  metadata?: ResumeMetadata; // Optional for backward compatibility with old saves
   createdAt: string;
   jdSnippet: string;
 }

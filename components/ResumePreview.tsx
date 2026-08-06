@@ -5,7 +5,7 @@ import type { TailoredResume } from "@/lib/resumeSchema";
 import { renderResumeHtml, FIT_STEPS } from "@/templates/resume.html";
 
 /** On-screen preview — renders the exact same HTML template used for the PDF. */
-export default function ResumePreview({ r }: { r: TailoredResume }) {
+export default function ResumePreview({ r, layout, hiddenSections }: { r: TailoredResume; layout?: string[]; hiddenSections?: string[] }) {
   const [fitIndex, setFitIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,7 +14,7 @@ export default function ResumePreview({ r }: { r: TailoredResume }) {
   // Reset fit index when resume changes
   useEffect(() => {
     setFitIndex(0);
-  }, [r]);
+  }, [r, layout, hiddenSections]);
 
   // Handle responsive scaling so the iframe is ALWAYS 794px wide internally
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function ResumePreview({ r }: { r: TailoredResume }) {
     return () => observer.disconnect();
   }, []);
 
-  const html = renderResumeHtml(r, FIT_STEPS[fitIndex]);
+  const html = renderResumeHtml(r, FIT_STEPS[fitIndex], { layout: layout || [], hiddenSections: hiddenSections || [] });
 
   function handleIframeLoad() {
     if (!iframeRef.current) return;

@@ -10,6 +10,11 @@ export const runtime = "nodejs";
 const SaveBodySchema = z.object({
   label: z.string().min(1).max(100),
   resume: TailoredResumeSchema,
+  metadata: z.object({
+    layout: z.array(z.string()),
+    hiddenSections: z.array(z.string()),
+    template: z.string()
+  }).optional(),
   jdSnippet: z.string().default(""),
 });
 
@@ -39,6 +44,7 @@ export async function POST(req: NextRequest) {
       id: randomUUID(),
       label: body.data.label,
       resume: body.data.resume,
+      metadata: body.data.metadata,
       createdAt: new Date().toISOString(),
       jdSnippet: body.data.jdSnippet.slice(0, 100),
     };

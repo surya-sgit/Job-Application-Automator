@@ -75,7 +75,7 @@ async function launchBrowser(): Promise<Browser> {
  * Render tailored resume JSON to a one-page PDF buffer with auto-fit: try each
  * fit step (looser -> tighter) and keep the first that fits one printable page.
  */
-export async function renderResumePdf(resume: TailoredResume): Promise<Buffer> {
+export async function renderResumePdf(resume: TailoredResume, metadata?: { layout: string[]; hiddenSections: string[] }): Promise<Buffer> {
   let browser: Browser | undefined;
   try {
     browser = await launchBrowser();
@@ -84,7 +84,7 @@ export async function renderResumePdf(resume: TailoredResume): Promise<Buffer> {
 
     let chosen = FIT_STEPS[FIT_STEPS.length - 1];
     for (const step of FIT_STEPS) {
-      await page.setContent(renderResumeHtml(resume, step), { waitUntil: "load" });
+      await page.setContent(renderResumeHtml(resume, step, metadata), { waitUntil: "load" });
       await page.evaluate(() => document.fonts.ready);
       const height = await page.evaluate(() => document.body.scrollHeight);
       if (height <= PRINTABLE_H) {
@@ -93,7 +93,7 @@ export async function renderResumePdf(resume: TailoredResume): Promise<Buffer> {
       }
     }
 
-    await page.setContent(renderResumeHtml(resume, chosen), { waitUntil: "load" });
+    await page.setContent(renderResumeHtml(resume, chosen, metadata), { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
     return Buffer.from(pdf);

@@ -55,6 +55,8 @@ export default function TailorApp() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [draftResume, setDraftResume] = useState<TailoredResume | null>(null);
   const [resume, setResume] = useState<TailoredResume | null>(null);
+  const [resumeLayout, setResumeLayout] = useState<string[]>([]);
+  const [resumeHiddenSections, setResumeHiddenSections] = useState<string[]>([]);
   const [useLatex, setUseLatex] = useState(false);
   const [latexOutput, setLatexOutput] = useState("");
   const [deepPolish, setDeepPolish] = useState(false);
@@ -252,7 +254,10 @@ export default function TailorApp() {
       const res = await fetch("/api/resume/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(resume),
+        body: JSON.stringify({
+          resume,
+          metadata: { layout: resumeLayout, hiddenSections: resumeHiddenSections, template: "modern" }
+        }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "PDF failed");
       const blob = await res.blob();
@@ -327,6 +332,7 @@ export default function TailorApp() {
         subject,
         body: signature ? `${body}\n\n${signature}` : body,
         resume,
+        metadata: { layout: resumeLayout, hiddenSections: resumeHiddenSections, template: "modern" }
       });
       setSendResult(`Sent to ${to} with your resume attached.`);
     } catch (e) {
@@ -346,6 +352,7 @@ export default function TailorApp() {
       const r = await post("/api/resumes", {
         label: saveLabel.trim(),
         resume,
+        metadata: { layout: resumeLayout, hiddenSections: resumeHiddenSections, template: "modern" },
         jdSnippet: jd.slice(0, 100),
       });
       setSavedResumes((prev) => [r.saved, ...prev]);
@@ -785,39 +792,44 @@ export default function TailorApp() {
           )}
           <ResumeEditor
             draftResume={draftResume}
-          jdAnalysis={analysis}
-          originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
-          onSave={async (edited, syncSkills) => {
-            setResume(edited);
-            setStep("resume");
-            
-            if (syncSkills && rawProfile) {
-              try {
-                const updatedProfile = { ...rawProfile, skills: edited.skills };
-                await post("/api/profile", updatedProfile);
-                setRawProfile(updatedProfile);
-              } catch (err) {
-                console.error("Failed to sync skills to profile", err);
+            jdAnalysis={analysis}
+            originalResume={selectedBaseId ? savedResumes.find(s => s.id === selectedBaseId)?.resume || null : rawProfile}
+            defaultLayout={rawProfile?.defaultResumeLayout || ["summary", "experience", "projects", "skills", "education", "certifications", "achievements"]}
+            defaultHiddenSections={rawProfile?.hiddenSections || []}
+            onSave={async (edited, layout, hiddenSections, syncSkills) => {
+              setResume(edited);
+              setResumeLayout(layout);
+              setResumeHiddenSections(hiddenSections);
+              setStep("resume");
+              
+              if (syncSkills && rawProfile) {
+                try {
+                  const updatedProfile = { ...rawProfile, skills: edited.skills };
+                  await post("/api/profile", updatedProfile);
+                  setRawProfile(updatedProfile);
+                } catch (err) {
+                  console.error("Failed to sync skills to profile", err);
+                }
               }
-            }
 
-            // Auto-save the first resume so the user has a baseline for future tweaks
-            if (savedResumes.length === 0) {
-              try {
-                const savedRes = await post("/api/resumes", {
-                  label: "Base Resume (Auto-saved)",
-                  resume: edited,
-                  jdSnippet: jd.slice(0, 100),
-                });
-                setSavedResumes((prev) => [savedRes.saved, ...prev]);
-                setSelectedBaseId(savedRes.saved.id);
-              } catch (autoSaveErr) {
-                console.error("Failed to auto-save initial resume", autoSaveErr);
+              // Auto-save the first resume so the user has a baseline for future tweaks
+              if (savedResumes.length === 0) {
+                try {
+                  const savedRes = await post("/api/resumes", {
+                    label: "Base Resume (Auto-saved)",
+                    resume: edited,
+                    metadata: { layout, hiddenSections, template: "modern" },
+                    jdSnippet: jd.slice(0, 100),
+                  });
+                  setSavedResumes((prev) => [savedRes.saved, ...prev]);
+                  setSelectedBaseId(savedRes.saved.id);
+                } catch (autoSaveErr) {
+                  console.error("Failed to auto-save initial resume", autoSaveErr);
+                }
               }
-            }
-          }}
-          onCancel={() => setStep("questions")}
-        />
+            }}
+            onCancel={() => setStep("questions")}
+          />
         </div>
       )}
 
@@ -849,7 +861,7 @@ export default function TailorApp() {
                   readOnly
                 />
               ) : (
-                <ResumePreview r={resume!} />
+                <ResumePreview r={resume!} layout={resumeLayout} hiddenSections={resumeHiddenSections} />
               )}
             </div>
 

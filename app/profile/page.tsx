@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchJson } from "@/lib/clientFetch";
 import type { Profile, Project, Experience, Education } from "@/lib/resumeSchema";
+import LayoutManager from "@/components/LayoutManager";
 
 const EMPTY: Profile = {
   name: "",
@@ -19,6 +20,8 @@ const EMPTY: Profile = {
   experience: [],
   education: [],
   latexTemplate: "",
+  defaultResumeLayout: ["summary", "experience", "projects", "skills", "education", "certifications", "achievements"],
+  hiddenSections: [],
 };
 
 function uid() {
@@ -649,6 +652,23 @@ export default function ProfilePage() {
           placeholder="Achievements (one per line)"
           value={p.achievements}
           onChange={(val) => set("achievements", val)}
+        />
+      </div>
+
+      {/* Global Resume Layout */}
+      <div className="card space-y-4">
+        <div>
+          <h2 className="font-semibold">Default Resume Layout</h2>
+          <p className="text-sm text-slate-500">
+            Drag to reorder sections. Use the eye icon to hide sections globally. You can always override this layout on a per-application basis when generating a tailored resume.
+          </p>
+        </div>
+        <LayoutManager
+          layout={p.defaultResumeLayout || ["summary", "experience", "projects", "skills", "education", "certifications", "achievements"]}
+          hiddenSections={p.hiddenSections || []}
+          onChange={(layout, hiddenSections) => {
+            setP({ ...p, defaultResumeLayout: layout, hiddenSections });
+          }}
         />
       </div>
 

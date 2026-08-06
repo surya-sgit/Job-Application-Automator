@@ -56,6 +56,8 @@ export const ProfileSchema = z.object({
   experience: z.array(ExperienceSchema).default([]),
   education: z.array(EducationSchema).default([]),
   latexTemplate: z.string().default(""),
+  defaultResumeLayout: z.array(z.string()).default(["summary", "experience", "projects", "skills", "education", "certifications", "achievements"]),
+  hiddenSections: z.array(z.string()).default([]),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
 

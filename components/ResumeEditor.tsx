@@ -7,12 +7,15 @@ import { Lock, Sparkles, Undo2, ChevronDown, ChevronUp, Eye, Edit2, X } from "lu
 import DiffViewer from "./DiffViewer";
 import QualityReport from "./QualityReport";
 import type { JdAnalysis } from "@/lib/resumeSchema";
+import LayoutManager from "./LayoutManager";
 
 interface Props {
   draftResume: TailoredResume;
   jdAnalysis: JdAnalysis | null;
   originalResume: TailoredResume | ParsedProfile | null;
-  onSave: (edited: TailoredResume, syncSkills?: boolean) => void;
+  defaultLayout: string[];
+  defaultHiddenSections: string[];
+  onSave: (edited: TailoredResume, layout: string[], hiddenSections: string[], syncSkills?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -45,10 +48,43 @@ function strToArray(str: string): SkillGroup[] {
   return arr;
 }
 
-export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, onSave, onCancel }: Props) {
+export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, defaultLayout, defaultHiddenSections, onSave, onCancel }: Props) {
   const [edited, setEdited] = useState<TailoredResume>(JSON.parse(JSON.stringify(draftResume)));
   const [viewMode, setViewMode] = useState<"diff" | "edit">("diff");
   const [syncSkills, setSyncSkills] = useState(true);
+  
+  // Layout state
+  const [layout, setLayout] = useState<string[]>(defaultLayout);
+  const [hiddenSections, setHiddenSections] = useState<string[]>(defaultHiddenSections);
+
+  const applySuggestedLayout = () => {
+    const newLayout = [...layout];
+    const newHidden = new Set(hiddenSections);
+    
+    // Hide empty sections automatically
+    if (!edited.projects || edited.projects.length === 0) newHidden.add("projects");
+    if (!edited.certifications || edited.certifications.length === 0) newHidden.add("certifications");
+    if (!edited.achievements || edited.achievements.length === 0) newHidden.add("achievements");
+
+    // Reorder based on JD Analysis
+    const isJunior = jdAnalysis?.seniority.toLowerCase().includes("junior") || jdAnalysis?.seniority.toLowerCase().includes("entry");
+    if (isJunior) {
+      // Junior roles: Education > Skills > Projects > Experience
+      const idealOrder = ["summary", "education", "skills", "projects", "experience", "certifications", "achievements"];
+      idealOrder.forEach((section, index) => {
+        if (newLayout.includes(section)) {
+          newLayout.splice(newLayout.indexOf(section), 1);
+          newLayout.push(section);
+        }
+      });
+      setLayout(idealOrder.filter(s => newLayout.includes(s)));
+    } else {
+      // Senior roles: Experience > Projects > Skills > Education
+      const idealOrder = ["summary", "experience", "projects", "skills", "education", "certifications", "achievements"];
+      setLayout(idealOrder.filter(s => newLayout.includes(s)));
+    }
+    setHiddenSections(Array.from(newHidden));
+  };
   
   // Accordion state
   const [expandedRoles, setExpandedRoles] = useState<Set<number>>(new Set(edited.experience.map((_, i) => i)));
@@ -473,6 +509,20 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
           </div>
         )}
       </div>
+      
+      {/* Layout Manager */}
+      <div className="card space-y-4 mb-32 mx-4 md:mx-auto max-w-5xl border-brand-500/20 bg-dark-800/80 backdrop-blur-md">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-semibold text-lg text-brand-300">Resume Layout</h3>
+            <p className="text-sm text-slate-400 mt-1">Customize the section order and visibility specifically for this application.</p>
+          </div>
+          <button className="btn-ghost text-brand hover:bg-brand-500/10 text-sm" onClick={applySuggestedLayout}>
+            <Sparkles className="w-4 h-4 mr-2" /> Apply AI Suggested Layout
+          </button>
+        </div>
+        <LayoutManager layout={layout} hiddenSections={hiddenSections} onChange={(l, h) => { setLayout(l); setHiddenSections(h); }} />
+      </div>
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-dark-800/50/80 backdrop-blur-md border-t border-white/10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-50">
@@ -488,7 +538,7 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
             <button className="btn-ghost" onClick={onCancel}>
               Cancel
             </button>
-            <button className="btn-primary shadow-lg shadow-brand/30 px-8 py-2.5 font-semibold" onClick={() => onSave(edited, syncSkills)}>
+            <button className="btn-primary shadow-lg shadow-brand/30 px-8 py-2.5 font-semibold" onClick={() => onSave(edited, layout, hiddenSections, syncSkills)}>
               Approve & Finalize PDF →
             </button>
           </div>
