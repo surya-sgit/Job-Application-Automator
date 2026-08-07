@@ -6,12 +6,13 @@ Paste a job description → get a cleanly-formatted, JD-tailored one-page resume
 
 ## Features
 - **Premium UI/UX:** Built with a stunning dark-mode glassmorphic aesthetic, fluid `framer-motion` animations, a responsive drag-and-drop Kanban tracker, and side-by-side resume diffing.
+- **Hybrid Resume Layout Management:** Customize your default section order globally in your profile with drag-and-drop, or override it on a per-application basis. Includes an AI heuristic to automatically prioritize Education vs Experience depending on the job's seniority.
 - **Tailor Resume** from any pasted JD, with AI clarifying questions first.
 - **Smart Intercept Modals:** Seamlessly prompts you to fill out missing profile data before attempting a JD analysis, preventing wasted time.
 - **Strict Skill Categorization:** Your profile is the single source of truth for skill categories. The AI will never hallucinate or invent new categories. Instead, any new skills it discovers in a JD are placed in a "Suggested Skills" list for you to manually map or dismiss.
 - **Multiple projects** in your profile — the tool auto-selects the ones that match each JD (locally, **zero API tokens**).
 - **Any AI provider** — Claude, OpenAI, Gemini, Groq, or local Ollama. Pick in Settings.
-- **One-page PDF** with auto-fit spacing (never overflows).
+- **One-page PDF** with auto-fit spacing (never overflows). Layout customizations perfectly sync to the generated PDF.
 - **One-click Gmail send** with the resume attached + an AI-drafted email.
 - **Bank-Grade Security:** Keys/creds entered in the UI are stored using AES-256-GCM encryption, scoped strictly to your account.
 - **Abuse Prevention:** Built-in PostgreSQL rate limiting on all AI endpoints and strict payload size constraints.
