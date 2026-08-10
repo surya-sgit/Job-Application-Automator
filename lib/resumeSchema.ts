@@ -179,7 +179,7 @@ export const JdAnalysisSchema = z.object({
   responsibilities: z.array(z.string()),
   domain: z.string(),
   redFlags: z.array(z.string()),
-  recruiterEmail: z.string(),
+  recruiterEmail: z.string().nullable().optional().catch(null),
 });
 export type JdAnalysis = z.infer<typeof JdAnalysisSchema>;
 

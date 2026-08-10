@@ -152,6 +152,22 @@ function mergeProfile(
 
 // ---- Components to manage local text state for arrays to prevent cursor jumping ----
 
+function TextInput({ value, onChange, placeholder, className = "input w-full" }: { value: string, onChange: (val: string) => void, placeholder?: string, className?: string }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => {
+    if (value !== local) setLocal(value);
+  }, [value]);
+  return <input className={className} placeholder={placeholder} value={local} onChange={(e) => setLocal(e.target.value)} onBlur={() => onChange(local)} />;
+}
+
+function TextAreaInput({ value, onChange, placeholder, className = "input w-full" }: { value: string, onChange: (val: string) => void, placeholder?: string, className?: string }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => {
+    if (value !== local) setLocal(value);
+  }, [value]);
+  return <textarea className={className} placeholder={placeholder} value={local} onChange={(e) => setLocal(e.target.value)} onBlur={() => onChange(local)} />;
+}
+
 function ArrayInput({ value, onChange, placeholder }: { value: string[], onChange: (val: string[]) => void, placeholder: string }) {
   const [local, setLocal] = useState(value.join(", "));
   useEffect(() => {
@@ -159,10 +175,7 @@ function ArrayInput({ value, onChange, placeholder }: { value: string[], onChang
       setLocal(value.join(", "));
     }
   }, [value]);
-  return <input className="input" placeholder={placeholder} value={local} onChange={(e) => {
-    setLocal(e.target.value);
-    onChange(e.target.value.split(/[\n,]/).map(x => x.trim()).filter(Boolean));
-  }} />;
+  return <input className="input" placeholder={placeholder} value={local} onChange={(e) => setLocal(e.target.value)} onBlur={() => onChange(local.split(/[\n,]/).map(x => x.trim()).filter(Boolean))} />;
 }
 
 function ArrayTextarea({ value, onChange, placeholder, minH = "70px" }: { value: string[], onChange: (val: string[]) => void, placeholder: string, minH?: string }) {
@@ -172,10 +185,7 @@ function ArrayTextarea({ value, onChange, placeholder, minH = "70px" }: { value:
       setLocal(value.join("\n"));
     }
   }, [value]);
-  return <textarea className={`input min-h-[${minH}]`} placeholder={placeholder} value={local} onChange={(e) => {
-    setLocal(e.target.value);
-    onChange(e.target.value.split("\n").map(x => x.trim()).filter(Boolean));
-  }} />;
+  return <textarea className={`input min-h-[${minH}]`} placeholder={placeholder} value={local} onChange={(e) => setLocal(e.target.value)} onBlur={() => onChange(local.split("\n").map(x => x.trim()).filter(Boolean))} />;
 }
 
 function SkillsTextarea({ value, onChange }: { value: SkillGroup[], onChange: (val: SkillGroup[]) => void }) {
@@ -186,10 +196,7 @@ function SkillsTextarea({ value, onChange }: { value: SkillGroup[], onChange: (v
       setLocal(arrayToStr(value));
     }
   }, [value]);
-  return <textarea className="input min-h-[120px]" placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"} value={local} onChange={(e) => {
-    setLocal(e.target.value);
-    onChange(strToArray(e.target.value));
-  }} />;
+  return <textarea className="input min-h-[120px]" placeholder={"Programming:\nPython, SQL\n\nTools:\nDocker, Git"} value={local} onChange={(e) => setLocal(e.target.value)} onBlur={() => onChange(strToArray(local))} />;
 }
 
 export default function ProfilePage() {
@@ -430,26 +437,26 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Full name</label>
-            <input className="input" value={p.name} onChange={(e) => set("name", e.target.value)} />
+            <TextInput className="input" value={p.name} onChange={(v) => set("name", v)} />
           </div>
           <div>
             <label className="label">Headline / title</label>
-            <input className="input" value={p.title} onChange={(e) => set("title", e.target.value)} />
+            <TextInput className="input" value={p.title} onChange={(v) => set("title", v)} />
           </div>
           <div>
             <label className="label">Email</label>
-            <input className="input" value={p.email} onChange={(e) => set("email", e.target.value)} />
+            <TextInput className="input" value={p.email} onChange={(v) => set("email", v)} />
           </div>
           <div>
             <label className="label">Phone</label>
-            <input className="input" value={p.phone} onChange={(e) => set("phone", e.target.value)} />
+            <TextInput className="input" value={p.phone} onChange={(v) => set("phone", v)} />
           </div>
           <div>
             <label className="label">Location</label>
-            <input
+            <TextInput
               className="input"
               value={p.location}
-              onChange={(e) => set("location", e.target.value)}
+              onChange={(v) => set("location", v)}
             />
           </div>
           <div>
@@ -463,10 +470,10 @@ export default function ProfilePage() {
         </div>
         <div>
           <label className="label">Professional summary</label>
-          <textarea
+          <TextAreaInput
             className="input min-h-[80px]"
             value={p.summary}
-            onChange={(e) => set("summary", e.target.value)}
+            onChange={(v) => set("summary", v)}
           />
         </div>
         <div>
@@ -495,17 +502,17 @@ export default function ProfilePage() {
         {p.projects.map((proj) => (
           <div key={proj.id} className="rounded-lg border border-slate-200 p-4 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <input
+              <TextInput
                 className="input"
                 placeholder="Project title"
                 value={proj.title}
-                onChange={(e) => updateProject(proj.id, { title: e.target.value })}
+                onChange={(v) => updateProject(proj.id, { title: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="Your role (optional)"
                 value={proj.role}
-                onChange={(e) => updateProject(proj.id, { role: e.target.value })}
+                onChange={(v) => updateProject(proj.id, { role: v })}
               />
             </div>
             <ArrayInput
@@ -513,11 +520,11 @@ export default function ProfilePage() {
               value={proj.stack}
               onChange={(val) => updateProject(proj.id, { stack: val })}
             />
-            <textarea
+            <TextAreaInput
               className="input min-h-[50px]"
               placeholder="Short description"
               value={proj.description}
-              onChange={(e) => updateProject(proj.id, { description: e.target.value })}
+              onChange={(v) => updateProject(proj.id, { description: v })}
             />
             <ArrayTextarea
               placeholder="Bullet points (one per line)"
@@ -525,11 +532,11 @@ export default function ProfilePage() {
               onChange={(val) => updateProject(proj.id, { bullets: val })}
             />
             <div className="flex items-center gap-3">
-              <input
-                className="input"
+              <TextInput
+                className="input w-full"
                 placeholder="Link (optional)"
                 value={proj.link}
-                onChange={(e) => updateProject(proj.id, { link: e.target.value })}
+                onChange={(v) => updateProject(proj.id, { link: v })}
               />
               <button
                 className="btn-ghost text-red-600"
@@ -553,29 +560,29 @@ export default function ProfilePage() {
         {p.experience.map((exp) => (
           <div key={exp.id} className="rounded-lg border border-slate-200 p-4 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <input
+              <TextInput
                 className="input"
                 placeholder="Company"
                 value={exp.company}
-                onChange={(e) => updateExp(exp.id, { company: e.target.value })}
+                onChange={(v) => updateExp(exp.id, { company: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="Job title"
                 value={exp.title}
-                onChange={(e) => updateExp(exp.id, { title: e.target.value })}
+                onChange={(v) => updateExp(exp.id, { title: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="Start (e.g. Jan 2022)"
                 value={exp.start}
-                onChange={(e) => updateExp(exp.id, { start: e.target.value })}
+                onChange={(v) => updateExp(exp.id, { start: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="End (e.g. Present)"
                 value={exp.end}
-                onChange={(e) => updateExp(exp.id, { end: e.target.value })}
+                onChange={(v) => updateExp(exp.id, { end: v })}
               />
             </div>
             <ArrayTextarea
@@ -601,30 +608,30 @@ export default function ProfilePage() {
         {p.education.map((edu) => (
           <div key={edu.id} className="rounded-lg border border-slate-200 p-4 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <input
+              <TextInput
                 className="input"
                 placeholder="School"
                 value={edu.school}
-                onChange={(e) => updateEdu(edu.id, { school: e.target.value })}
+                onChange={(v) => updateEdu(edu.id, { school: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="Degree"
                 value={edu.degree}
-                onChange={(e) => updateEdu(edu.id, { degree: e.target.value })}
+                onChange={(v) => updateEdu(edu.id, { degree: v })}
               />
-              <input
+              <TextInput
                 className="input"
                 placeholder="Year"
                 value={edu.year}
-                onChange={(e) => updateEdu(edu.id, { year: e.target.value })}
+                onChange={(v) => updateEdu(edu.id, { year: v })}
               />
             </div>
-            <textarea
+            <TextAreaInput
               className="input min-h-[50px]"
               placeholder="Details (e.g. CGPA, awards, minor)"
               value={edu.details || ""}
-              onChange={(e) => updateEdu(edu.id, { details: e.target.value })}
+              onChange={(v) => updateEdu(edu.id, { details: v })}
             />
             <button className="btn-ghost text-red-600" onClick={() => removeEdu(edu.id)}>
               Remove
@@ -680,10 +687,10 @@ export default function ProfilePage() {
             Paste your raw `.tex` resume code here. If provided, you can choose to generate a tailored LaTeX file instead of the standard PDF.
           </p>
         </div>
-        <textarea
+        <TextAreaInput
           className="input min-h-[300px] font-mono text-xs whitespace-pre"
           value={p.latexTemplate}
-          onChange={(e) => set("latexTemplate", e.target.value)}
+          onChange={(v) => set("latexTemplate", v)}
           placeholder="\documentclass{article}&#10;\begin{document}&#10;..."
         />
       </div>

@@ -42,7 +42,8 @@ export default function TailorApp() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [profileEmpty, setProfileEmpty] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [settingsMissing, setSettingsMissing] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [rawProfile, setRawProfile] = useState<any>(null);
 
   const [analysis, setAnalysis] = useState<JdAnalysis | null>(null);
@@ -79,15 +80,35 @@ export default function TailorApp() {
   const [showSaved, setShowSaved] = useState(false);
   const [fallbackMsg, setFallbackMsg] = useState("");
 
-  // Best-effort empty-profile guard — never blocks the flow.
+  // Check setup completeness
   useEffect(() => {
-    fetchJson<any>("/api/profile")
-      .then((p) => {
+    Promise.all([
+      fetchJson<any>("/api/profile").catch(() => null),
+      fetchJson<any>("/api/settings").catch(() => null)
+    ]).then(([p, s]) => {
+      if (p) {
         setProfileEmpty(p.projects.length === 0 && p.experience.length === 0);
         setRawProfile(p);
-      })
-      .catch(() => {});
+      }
+      if (s) {
+        const hasKey = s.openaiKey || s.anthropicKey || s.geminiKey || s.groqKey || s.aiProvider === "ollama";
+        if (!hasKey) setSettingsMissing(true);
+      }
+    }).finally(() => {
+      setIsInitializing(false);
+    });
   }, []);
+
+  // Restore draft JD from localStorage
+  useEffect(() => {
+    const savedJd = localStorage.getItem("draft_jd");
+    if (savedJd) setJd(savedJd);
+  }, []);
+
+  function handleJdChange(val: string) {
+    setJd(val);
+    localStorage.setItem("draft_jd", val);
+  }
 
   // Load saved resumes on mount
   useEffect(() => {
@@ -113,10 +134,7 @@ export default function TailorApp() {
 
   // Step 1 → 2: analyze the JD + match projects locally, then stop for review.
   async function analyze() {
-    if (profileEmpty) {
-      setShowProfileModal(true);
-      return;
-    }
+    if (profileEmpty || settingsMissing) return;
     setError("");
     setSendResult("");
     try {
@@ -385,6 +403,7 @@ export default function TailorApp() {
   function reset() {
     setStep("input");
     setJd("");
+    localStorage.removeItem("draft_jd");
     setCompany("");
     setAnalysis(null);
     setMatched([]);
@@ -510,42 +529,71 @@ export default function TailorApp() {
         </div>
       )}
 
-      {error && (
-        <div className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-700">{error}</div>
-      )}
-
-      {/* STEP 1: JD input */}
+      {/* STEP 1: JD input OR Welcome Screen */}
       {step === "input" && (
-        <div className="card space-y-4">
-          <h1 className="text-xl font-bold">Paste a job description</h1>
-          {profileEmpty && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
-              Your profile is empty — add your projects and experience on the{" "}
-              <a className="font-medium underline" href="/profile">Profile page</a>{" "}
-              first so the resume has something to tailor.
+        <div className="space-y-4">
+          {isInitializing ? (
+            <div className="card flex items-center justify-center p-12">
+              <LoadingSpinner message="Checking setup status..." />
+            </div>
+          ) : settingsMissing ? (
+            <div className="card text-center py-16 space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 mb-2">
+                <AlertTriangle size={32} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display text-white">Welcome to Job Application Automator!</h1>
+                <p className="text-slate-400 mt-4 max-w-lg mx-auto leading-relaxed">
+                  To start generating perfectly tailored resumes, you first need to connect an AI Provider.
+                </p>
+              </div>
+              <Link href="/settings" className="btn-primary py-3 px-8 text-lg inline-flex mt-4">
+                Configure AI Provider →
+              </Link>
+            </div>
+          ) : profileEmpty ? (
+            <div className="card text-center py-16 space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 mb-2">
+                <User size={32} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display text-white">Just one more step!</h1>
+                <p className="text-slate-400 mt-4 max-w-lg mx-auto leading-relaxed">
+                  Now we need your baseline resume data (experience, education, skills) so the AI has something to work with.
+                </p>
+              </div>
+              <Link href="/profile" className="btn-primary py-3 px-8 text-lg inline-flex mt-4">
+                Create Your Profile →
+              </Link>
+            </div>
+          ) : (
+            <div className="card space-y-4">
+              <h1 className="text-xl font-bold">Paste a job description</h1>
+              <textarea
+                className="input min-h-[240px] font-mono text-sm"
+                placeholder="Paste the full job description here…"
+                value={jd}
+                onChange={(e) => handleJdChange(e.target.value)}
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input
+                  className="input"
+                  placeholder="Company name (optional, for the email)"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
+              </div>
+
+              {error && <p className="text-sm font-medium text-red-500">{error}</p>}
+              <button
+                className="btn-primary w-full py-3"
+                onClick={analyze}
+                disabled={!jd.trim() || !!busy}
+              >
+                {busy || "Analyze Job Description →"}
+              </button>
             </div>
           )}
-          <textarea
-            className="input min-h-[240px] font-mono text-sm"
-            placeholder="Paste the full job description here…"
-            value={jd}
-            onChange={(e) => setJd(e.target.value)}
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <input
-              className="input"
-              placeholder="Company name (optional, for the email)"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-            />
-          </div>
-          <button
-            className="btn-primary"
-            disabled={!!busy || jd.trim().length < 20}
-            onClick={analyze}
-          >
-            Analyze JD →
-          </button>
         </div>
       )}
 
@@ -1006,45 +1054,7 @@ export default function TailorApp() {
       </motion.div>
       </AnimatePresence>
 
-      {/* Empty Profile Intercept Modal */}
-      <AnimatePresence>
-        {showProfileModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/80 backdrop-blur-xl p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-dark-800/90 rounded-2xl border border-white/10 p-8 shadow-2xl max-w-md w-full text-center space-y-6"
-            >
-              <div className="w-16 h-16 mx-auto bg-brand-500/20 text-brand-400 flex items-center justify-center rounded-full shadow-inner border border-brand-500/30">
-                <User size={32} />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white mb-2">Profile Required</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  We need your baseline experience to accurately tailor this resume. Let's set up your profile first.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button 
-                  className="btn-ghost flex-1 py-3 text-sm font-medium" 
-                  onClick={() => setShowProfileModal(false)}
-                >
-                  Cancel
-                </button>
-                <Link href="/profile" className="btn-primary flex-1 py-3 text-sm">
-                  Go to Profile →
-                </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Busy Floating Loader */}
       <AnimatePresence>
