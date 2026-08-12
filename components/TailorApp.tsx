@@ -91,7 +91,7 @@ export default function TailorApp() {
         setRawProfile(p);
       }
       if (s) {
-        const hasKey = s.openaiKey || s.anthropicKey || s.geminiKey || s.groqKey || s.aiProvider === "ollama";
+        const hasKey = s.keys?.openai || s.keys?.anthropic || s.keys?.google || s.keys?.groq || s.provider === "ollama";
         if (!hasKey) setSettingsMissing(true);
       }
     }).finally(() => {
