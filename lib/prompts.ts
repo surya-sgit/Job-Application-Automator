@@ -130,7 +130,7 @@ export const TAILOR_SYSTEM = `[TASK]
 Rewrite the candidate's material into a tailored resume optimized for the target job description.
 
 [CONSTRAINTS]
-- STRUCTURE: Preserve the most impactful bullet points while adhering to STRICT LENGTH LIMITS: Max 3 bullets for the most recent role/project, and max 2 bullets for older roles/projects. Max 15 words per bullet point. Omit redundant or less impressive information to guarantee brevity. Include all experience entries and all matched projects.
+- STRUCTURE: Preserve ALL bullet points and their full details. Never drop, remove, or reduce the number of bullets. Include ALL experience entries and ALL matched projects.
 - REPHRASING: Rephrase bullets to be active and impactful, integrating JD keywords ONLY if they logically align with the candidate's actual work.
 - HALLUCINATIONS: STRICT PROHIBITION. NEVER invent, hallucinate, or add numerical metrics (percentages, dollars, hours), statistics, or facts that were not explicitly present in the original bullet points. Do not exaggerate accomplishments. Do NOT invent or fabricate technologies, tools, employers, degrees, or dates.
 - BOLDING: Use markdown to **bold** strictly 1-3 single nouns (technical skills, tools, or specific metrics) per bullet. NEVER bold verbs, action phrases, or entire sentences. Correct: "using **Redis** to improve speed by **40%**". Incorrect: "**using Redis to improve speed**".
