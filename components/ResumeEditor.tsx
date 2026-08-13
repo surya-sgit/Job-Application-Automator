@@ -67,7 +67,7 @@ export default function ResumeEditor({ draftResume, jdAnalysis, originalResume, 
     if (!edited.achievements || edited.achievements.length === 0) newHidden.add("achievements");
 
     // Reorder based on JD Analysis
-    const isJunior = jdAnalysis?.seniority.toLowerCase().includes("junior") || jdAnalysis?.seniority.toLowerCase().includes("entry");
+    const isJunior = jdAnalysis?.seniority?.toLowerCase().includes("junior") || jdAnalysis?.seniority?.toLowerCase().includes("entry");
     if (isJunior) {
       // Junior roles: Education > Skills > Projects > Experience
       const idealOrder = ["summary", "education", "skills", "projects", "experience", "certifications", "achievements"];
