@@ -170,15 +170,15 @@ export type TailoredResume = z.infer<typeof TailoredResumeSchema>;
 
 /** Output of the JD analyzer agent (agent 1). */
 export const JdAnalysisSchema = z.object({
-  jobTitle: z.string(),
-  companyName: z.string(),
-  seniority: z.string(),
-  hardSkills: z.array(z.string()),
-  softSkills: z.array(z.string()),
-  keywords: z.array(z.string()),
-  responsibilities: z.array(z.string()),
-  domain: z.string(),
-  redFlags: z.array(z.string()),
+  jobTitle: z.string().catch(""),
+  companyName: z.string().catch(""),
+  seniority: z.string().nullable().optional().catch(null),
+  hardSkills: z.array(z.string()).default([]),
+  softSkills: z.array(z.string()).default([]),
+  keywords: z.array(z.string()).default([]),
+  responsibilities: z.array(z.string()).default([]),
+  domain: z.string().nullable().optional().catch(null),
+  redFlags: z.array(z.string()).default([]),
   recruiterEmail: z.string().nullable().optional().catch(null),
 });
 export type JdAnalysis = z.infer<typeof JdAnalysisSchema>;
