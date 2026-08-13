@@ -278,9 +278,18 @@ ${html}
         }
         .resume {
             width: 100%;
+            min-height: 1123px; /* A4 height */
             margin: auto;
             background: white;
             padding: ${fit.padding}px;
+            display: flex;
+            flex-direction: column;
+        }
+        .resume-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         header {
             text-align: center;
@@ -380,7 +389,9 @@ ${html}
         </div>
     </header>
 
+    <div class="resume-wrapper">
 ${sectionsHtml}
+    </div>
 
 </div>
 

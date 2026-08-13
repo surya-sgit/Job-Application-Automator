@@ -5,7 +5,7 @@ import type { TailoredResume } from "@/lib/resumeSchema";
 import { renderResumeHtml, FIT_STEPS } from "@/templates/resume.html";
 
 /** On-screen preview — renders the exact same HTML template used for the PDF. */
-export default function ResumePreview({ r, layout, hiddenSections }: { r: TailoredResume; layout?: string[]; hiddenSections?: string[] }) {
+export default function ResumePreview({ r, layout, hiddenSections, onOverflowStatusChange }: { r: TailoredResume; layout?: string[]; hiddenSections?: string[]; onOverflowStatusChange?: (isOverflowing: boolean) => void }) {
   const [fitIndex, setFitIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,8 +39,14 @@ export default function ResumePreview({ r, layout, hiddenSections }: { r: Tailor
       // Wait for fonts to load before measuring height
       doc.fonts.ready.then(() => {
         const height = doc.body.scrollHeight;
-        if (height > 1123 && fitIndex < FIT_STEPS.length - 1) {
-          setFitIndex((prev) => prev + 1);
+        if (height > 1123) {
+          if (fitIndex < FIT_STEPS.length - 1) {
+            setFitIndex((prev) => prev + 1);
+          } else {
+            onOverflowStatusChange?.(true);
+          }
+        } else {
+          onOverflowStatusChange?.(false);
         }
       });
     } catch (e) {

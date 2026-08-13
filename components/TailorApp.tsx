@@ -79,6 +79,7 @@ export default function TailorApp() {
   const [selectedBaseId, setSelectedBaseId] = useState<string>("");
   const [showSaved, setShowSaved] = useState(false);
   const [fallbackMsg, setFallbackMsg] = useState("");
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   // Check setup completeness
   useEffect(() => {
@@ -909,6 +910,11 @@ export default function TailorApp() {
               </div>
             </div>
             <div className="max-h-[80vh] overflow-auto rounded-xl border border-white/10 bg-white/10 p-4">
+              {isOverflowing && !latexOutput && (
+                <div className="mb-4 rounded border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
+                  ⚠️ <strong>Overflow Warning:</strong> Your resume fundamentally exceeds one page length, even after max compression. Please hide a section or edit your text to fit!
+                </div>
+              )}
               {latexOutput ? (
                 <textarea
                   className="input min-h-[500px] w-full font-mono text-xs whitespace-pre"
@@ -916,7 +922,7 @@ export default function TailorApp() {
                   readOnly
                 />
               ) : (
-                <ResumePreview r={resume!} layout={resumeLayout} hiddenSections={resumeHiddenSections} />
+                <ResumePreview r={resume!} layout={resumeLayout} hiddenSections={resumeHiddenSections} onOverflowStatusChange={setIsOverflowing} />
               )}
             </div>
 
