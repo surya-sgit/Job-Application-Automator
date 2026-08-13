@@ -66,7 +66,7 @@ export async function safeGenerateObject<T>(opts: {
     model: opts.model,
     temperature: opts.temperature ?? 0,
     maxTokens: opts.maxTokens ?? 1500,
-    system: opts.system + "\n\nCRITICAL INSTRUCTION: You MUST output strictly valid JSON matching the requested schema. Do NOT wrap in markdown code blocks like ```json. Do NOT include conversational text. Return ONLY the raw JSON object.",
+    system: opts.system + "\n\nCRITICAL INSTRUCTION: You MUST output strictly valid JSON matching the requested schema. Do NOT wrap in markdown code blocks like ```json. Do NOT include conversational text. Do NOT include comments (like // or /* */) inside the JSON. Return ONLY the raw valid JSON object.",
     prompt: opts.prompt,
   });
 
