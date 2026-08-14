@@ -95,6 +95,29 @@ export async function renderResumePdf(resume: TailoredResume, metadata?: { layou
 
     await page.setContent(renderResumeHtml(resume, chosen, metadata), { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
+    
+    // TWO-PASS REMAINING SPACE INJECTOR
+    const contentHeight = await page.evaluate(() => document.body.scrollHeight);
+    if (contentHeight <= PRINTABLE_H) {
+      const leftoverSpace = PRINTABLE_H - contentHeight;
+      // Only distribute if there's a noticeable gap (> 10px but < 150px)
+      if (leftoverSpace > 10 && leftoverSpace < 150) {
+        await page.evaluate((extraSpace) => {
+          const sections = document.querySelectorAll('section');
+          if (sections.length > 1) {
+            // Divide the leftover space equally among the gaps between sections
+            const paddingToAdd = extraSpace / (sections.length - 1);
+            sections.forEach((sec, index) => {
+              if (index !== 0) { // Don't add margin to the very first section
+                const currentMargin = parseFloat(window.getComputedStyle(sec).marginTop) || 0;
+                sec.style.marginTop = `${currentMargin + paddingToAdd}px`;
+              }
+            });
+          }
+        }, leftoverSpace);
+      }
+    }
+
     const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
     return Buffer.from(pdf);
   } finally {

@@ -207,7 +207,7 @@ ${html}
   const renderCertifications = () => {
     if (!r.certifications || r.certifications.length === 0) return "";
     const html = r.certifications.map((c) => `<li>${esc(c)}</li>`).join("\n");
-    return `    <section>
+    return `    <section class="certifications-section">
         <h2>Certifications</h2>
         <ul>
 ${html}
@@ -218,7 +218,7 @@ ${html}
   const renderAchievements = () => {
     if (!r.achievements || r.achievements.length === 0) return "";
     const html = r.achievements.map((a) => `<li>${esc(a)}</li>`).join("\n");
-    return `    <section>
+    return `    <section class="achievements-section">
         <h2>Achievements</h2>
         <ul>
 ${html}
@@ -281,7 +281,7 @@ ${html}
             min-height: 1123px; /* A4 height */
             margin: auto;
             background: white;
-            padding: ${fit.padding}px;
+            padding: ${fit.padding}px 48px;
             display: flex;
             flex-direction: column;
         }
@@ -313,6 +313,9 @@ ${html}
             color: #444;
             line-height: 1.6;
             text-align: justify;
+            text-justify: inter-word;
+            hyphens: auto;
+            -webkit-hyphens: auto;
         }
         section {
             margin-top: ${fit.sectionMt}px;
@@ -344,6 +347,13 @@ ${html}
         ul {
             margin-top: 10px;
             padding-left: 22px;
+        }
+        .skills,
+        .certifications-section ul, 
+        .achievements-section ul {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            column-gap: 20px;
         }
         li {
             margin-bottom: ${fit.liMb}px;
