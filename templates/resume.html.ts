@@ -34,8 +34,8 @@ export const FIT_STEPS: FitVars[] = [
   { basePx: 15, h1Px: 42, h2Px: 26, h2Pb: 8, h2Mb: 20, h3Px: 20, sectionMt: 32, articleMb: 26, liMb: 10, headerMb: 34, padding: 56 },
   // Expansion 1: Slightly Larger
   { basePx: 14.5, h1Px: 40, h2Px: 25, h2Pb: 7, h2Mb: 18, h3Px: 19, sectionMt: 30, articleMb: 24, liMb: 9, headerMb: 32, padding: 53 },
-  // Step 0: User's EXACT original values
-  { basePx: 14, h1Px: 38, h2Px: 24, h2Pb: 6, h2Mb: 16, h3Px: 18, sectionMt: 28, articleMb: 22, liMb: 8, headerMb: 30, padding: 50 },
+  // Step 0: Optimized for single-page density
+  { basePx: 14, h1Px: 36, h2Px: 22, h2Pb: 4, h2Mb: 12, h3Px: 16, sectionMt: 16, articleMb: 16, liMb: 6, headerMb: 20, padding: 40 },
   // Step 1: Slightly tighter
   { basePx: 13.5, h1Px: 36, h2Px: 22, h2Pb: 5, h2Mb: 14, h3Px: 17, sectionMt: 24, articleMb: 18, liMb: 7, headerMb: 26, padding: 45 },
   // Step 2: Compact
@@ -289,7 +289,7 @@ ${html}
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
         header {
             text-align: center;
