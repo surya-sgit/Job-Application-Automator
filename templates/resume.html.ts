@@ -34,10 +34,10 @@ export const FIT_STEPS: FitVars[] = [
   { basePx: 15, h1Px: 42, h2Px: 26, h2Pb: 8, h2Mb: 20, h3Px: 20, sectionMt: 32, articleMb: 26, liMb: 10, headerMb: 34, padding: 56 },
   // Expansion 1: Slightly Larger
   { basePx: 14.5, h1Px: 40, h2Px: 25, h2Pb: 7, h2Mb: 18, h3Px: 19, sectionMt: 30, articleMb: 24, liMb: 9, headerMb: 32, padding: 53 },
-  // Step 0: Optimized for single-page density
-  { basePx: 14, h1Px: 38, h2Px: 24, h2Pb: 4, h2Mb: 12, h3Px: 18, sectionMt: 16, articleMb: 12, liMb: 6, headerMb: 20, padding: 40 },
-  // Step 1: Slightly tighter
-  { basePx: 13.5, h1Px: 36, h2Px: 22, h2Pb: 4, h2Mb: 10, h3Px: 17, sectionMt: 14, articleMb: 10, liMb: 5, headerMb: 18, padding: 36 },
+  // Step 0: Original large fonts, optimized tight spacing
+  { basePx: 14, h1Px: 38, h2Px: 24, h2Pb: 4, h2Mb: 12, h3Px: 18, sectionMt: 16, articleMb: 12, liMb: 4, headerMb: 16, padding: 30 },
+  // Step 1: Slightly smaller fonts, tight spacing
+  { basePx: 13.5, h1Px: 36, h2Px: 22, h2Pb: 4, h2Mb: 10, h3Px: 17, sectionMt: 14, articleMb: 10, liMb: 3, headerMb: 14, padding: 28 },
   // Step 2: Compact
   { basePx: 13, h1Px: 34, h2Px: 21, h2Pb: 3, h2Mb: 8, h3Px: 16, sectionMt: 12, articleMb: 8, liMb: 4, headerMb: 16, padding: 32 },
   // Step 3: Tight
