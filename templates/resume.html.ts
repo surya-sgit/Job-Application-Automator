@@ -35,11 +35,11 @@ export const FIT_STEPS: FitVars[] = [
   // Expansion 1: Slightly Larger
   { basePx: 14.5, h1Px: 40, h2Px: 25, h2Pb: 7, h2Mb: 18, h3Px: 19, sectionMt: 30, articleMb: 24, liMb: 9, headerMb: 32, padding: 53 },
   // Step 0: Optimized for single-page density
-  { basePx: 14, h1Px: 36, h2Px: 22, h2Pb: 4, h2Mb: 12, h3Px: 16, sectionMt: 16, articleMb: 16, liMb: 6, headerMb: 20, padding: 40 },
+  { basePx: 14, h1Px: 38, h2Px: 24, h2Pb: 4, h2Mb: 12, h3Px: 18, sectionMt: 16, articleMb: 12, liMb: 6, headerMb: 20, padding: 40 },
   // Step 1: Slightly tighter
-  { basePx: 13.5, h1Px: 36, h2Px: 22, h2Pb: 5, h2Mb: 14, h3Px: 17, sectionMt: 24, articleMb: 18, liMb: 7, headerMb: 26, padding: 45 },
+  { basePx: 13.5, h1Px: 36, h2Px: 22, h2Pb: 4, h2Mb: 10, h3Px: 17, sectionMt: 14, articleMb: 10, liMb: 5, headerMb: 18, padding: 36 },
   // Step 2: Compact
-  { basePx: 13, h1Px: 34, h2Px: 21, h2Pb: 4, h2Mb: 12, h3Px: 16, sectionMt: 20, articleMb: 16, liMb: 6, headerMb: 22, padding: 40 },
+  { basePx: 13, h1Px: 34, h2Px: 21, h2Pb: 3, h2Mb: 8, h3Px: 16, sectionMt: 12, articleMb: 8, liMb: 4, headerMb: 16, padding: 32 },
   // Step 3: Tight
   { basePx: 12.5, h1Px: 32, h2Px: 20, h2Pb: 3, h2Mb: 10, h3Px: 15.5, sectionMt: 18, articleMb: 14, liMb: 5, headerMb: 20, padding: 36 },
   // Step 4: Very tight
