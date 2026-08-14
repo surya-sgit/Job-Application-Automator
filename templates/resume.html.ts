@@ -207,7 +207,7 @@ ${html}
   const renderCertifications = () => {
     if (!r.certifications || r.certifications.length === 0) return "";
     const html = r.certifications.map((c) => `<li>${esc(c)}</li>`).join("\n");
-    return `    <section class="certifications-section">
+    return `    <section>
         <h2>Certifications</h2>
         <ul>
 ${html}
@@ -218,7 +218,7 @@ ${html}
   const renderAchievements = () => {
     if (!r.achievements || r.achievements.length === 0) return "";
     const html = r.achievements.map((a) => `<li>${esc(a)}</li>`).join("\n");
-    return `    <section class="achievements-section">
+    return `    <section>
         <h2>Achievements</h2>
         <ul>
 ${html}
@@ -347,13 +347,6 @@ ${html}
         ul {
             margin-top: 10px;
             padding-left: 22px;
-        }
-        .skills,
-        .certifications-section ul, 
-        .achievements-section ul {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            column-gap: 20px;
         }
         li {
             margin-bottom: ${fit.liMb}px;
